@@ -1,25 +1,35 @@
 import Collider from "./collider";
-import { gameWorld } from "./game";
+import { gameWorld, lerp } from "./game";
 
 const playerWidth = 32;
 const playerHeight = 32
-const gravity = 0.5;
+const gravity = 1;
 
 class Player{
     constructor(x, y) {
         this.x = x;
         this.y = y;
 
+        this.lastX = x;
+        this.lastY = y;
+
         this.velY = 0;
 
         this.collider = new Collider(x, y, playerWidth, playerHeight);
     }
 
-    draw = ctx => {
-        ctx.fillRect(this.x, this.y, playerWidth, playerHeight);
+    draw = (ctx, interp) => {
+        let drawX = lerp(this.lastX, this.x, interp);
+        let drawY = lerp(this.lastY, this.y, interp);
+
+        ctx.fillStyle = 'green';
+        ctx.fillRect(drawX, drawY, playerWidth, playerHeight);
     }
 
     tick = () => {
+        this.lastX = this.x;
+        this.lastY = this.y;
+
         this.velY += gravity;
         this.y += this.velY;
 
