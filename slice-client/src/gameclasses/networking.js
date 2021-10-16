@@ -22,15 +22,24 @@ const setRemote = (conn) => {
 
     conn.on('close', () => {
         console.log('Remote connection closed.');
-        onCloseConnection();
+        onCloseRemote();
     })
 
     conn.on('error', err => {
         console.log('Remote client error: ' + err.type);
-        onCloseConnection();
+        onCloseRemote();
     });
 
     remote = conn;
+}
+
+const onCloseRemote = () => {
+    // Ensure the connection is closed
+    if(remote !== null)
+        remote.close();
+
+    // Unset the remote connection
+    remote = null;
 }
 
 const disconnect = () => {
@@ -38,13 +47,6 @@ const disconnect = () => {
         return;
 
     remote.close();
-}
-
-const onCloseConnection = () => {
-    if(remote !== null)
-        remote.close();
-
-    remote = null;
 }
 
 window.connectToPeer = (id) => {
