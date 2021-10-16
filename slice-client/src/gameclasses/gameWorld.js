@@ -2,7 +2,6 @@ import Player from "./player";
 import { frameTime, maxStateRecordings } from "./game";
 import { getLocalInput } from "./input";
 import Collider from "./collider";
-import client from "./networking";
 
 class GameState {
     constructor(player1State) {
@@ -57,6 +56,7 @@ class GameWorld {
     }
 
     tick = () => {
+        console.log('tick');
         this.localInputs.unshift(getLocalInput());
 
         // Tick the player and get the new state

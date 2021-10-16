@@ -1,17 +1,16 @@
 import './App.css';
 import GameCanvas from './components/game/gameCanvas';
-
-import store from './redux/store/store';
 import { connect } from 'react-redux';
+import './gameclasses/networking';
 
 const mapStateToProps =  state => {
   return {
-    hasConnection: state.gameConnection.hasConnection
+    gameStarted: state.gameStarted
   }
 }
 
-const ConnectApp = ({hasConnection}) => {
-  const gameCanvas = hasConnection ? <GameCanvas/> : null;
+const ConnectApp = ({gameStarted}) => {
+  const gameCanvas = gameStarted ? <GameCanvas/> : null;
 
   return (
     <div>

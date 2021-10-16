@@ -1,4 +1,5 @@
 import Peer from 'peerjs';
+import { startGame, stopGame } from './game';
 
 let client = new Peer();
 let remote = null;
@@ -18,6 +19,7 @@ const setRemote = (conn) => {
 
     conn.on('open', () => {
         console.log('Remote connection opened.');
+        startGame();
     });
 
     conn.on('close', () => {
@@ -40,6 +42,7 @@ const onCloseRemote = () => {
 
     // Unset the remote connection
     remote = null;
+    stopGame();
 }
 
 const disconnect = () => {
