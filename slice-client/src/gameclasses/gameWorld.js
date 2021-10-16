@@ -1,6 +1,6 @@
 import Player from "./player";
 import { frameTime, maxStateRecordings } from "./game";
-import { getLocalInput } from "./input";
+import { getDefaultInput, getLocalInput } from "./input";
 import Collider from "./collider";
 
 class GameState {
@@ -10,12 +10,17 @@ class GameState {
 }
 
 class GameWorld {
-    constructor(width, height) {
+    constructor(width, height, remote, isHost) {
+        this.isHost = isHost;
+        this.remote = remote;
         this.width = width;
         this.height = height;
         this.states = [];
+
         this.localInputs = [];
-        this.localInputs.push({up: false, down: false, left: false, right:false, dash: false});
+        this.localInputs.push(getDefaultInput());
+        this.remoteInputs = [];
+        this.remoteInputs.push(getDefaultInput());
 
         // Create player 1 and copy their state to the first game state
         this.player1 = new Player(0, 0);
@@ -56,7 +61,6 @@ class GameWorld {
     }
 
     tick = () => {
-        console.log('tick');
         this.localInputs.unshift(getLocalInput());
 
         // Tick the player and get the new state

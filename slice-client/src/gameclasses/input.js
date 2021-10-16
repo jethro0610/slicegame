@@ -16,6 +16,16 @@ const getLocalInput = () => {
     }
 };
 
+const getDefaultInput = () => {
+    return {
+        up: false,
+        down: false,
+        left: false,
+        right: false,
+        dash: false
+    }
+}
+
 const onKeyDown = (e) => {
     if(e.keyCode === 32)
         localInput.up = true;
@@ -44,4 +54,4 @@ const onKeyUp = (e) => {
 window.addEventListener('keydown', onKeyDown, true);
 window.addEventListener('keyup', onKeyUp, true);
 
-export { getLocalInput };
+export { getLocalInput, getDefaultInput };

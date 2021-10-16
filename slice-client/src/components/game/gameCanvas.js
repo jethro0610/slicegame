@@ -10,6 +10,9 @@ const GameCanvas = props => {
         const ctx = canvas.getContext('2d');
 
         const draw = () => {
+            if(gameWorld === null)
+                return;
+                
             gameWorld.doTicks();
             gameWorld.draw(ctx);
             requestAnimationFrame(draw);

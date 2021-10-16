@@ -1,8 +1,9 @@
 import Peer from 'peerjs';
-import { startGame, stopGame } from './game';
+import { startGame, stopGame, gameWorld } from './game';
 
 let client = new Peer();
 let remote = null;
+let isHost = false;
 
 client.on('open', (id) => {
     console.log('Opened PeerJS connection with ID: ' + id);
@@ -10,6 +11,7 @@ client.on('open', (id) => {
 
 client.on('connection', (conn) => {
     console.log('Got a connection.');
+    isHost = true;
     setRemote(conn);
 });
 
@@ -19,7 +21,7 @@ const setRemote = (conn) => {
 
     conn.on('open', () => {
         console.log('Remote connection opened.');
-        startGame();
+        startGame(conn, isHost);
     });
 
     conn.on('close', () => {
@@ -32,6 +34,10 @@ const setRemote = (conn) => {
         onCloseRemote();
     });
 
+    conn.on('data', data => {
+        console.log(data);
+    })
+
     remote = conn;
 }
 
@@ -42,6 +48,7 @@ const onCloseRemote = () => {
 
     // Unset the remote connection
     remote = null;
+    isHost = false;
     stopGame();
 }
 

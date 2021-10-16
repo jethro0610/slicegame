@@ -6,14 +6,14 @@ let gameWorld = null;
 const frameTime = (1/60.0) * 1000;
 const maxStateRecordings = 600;
 
-const startGame = () => {
-    gameWorld = new GameWorld(800, 800);
+const startGame = (remote, isHost) => {
+    gameWorld = new GameWorld(800, 800, remote, isHost);
     store.dispatch(setStarted(true));
 }
 
 const stopGame = () => {
-    gameWorld = null;
     store.dispatch(setStarted(false));
+    gameWorld = null;
 }
 
 const lerp = (a, b, t) => {
