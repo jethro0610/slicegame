@@ -11,16 +11,20 @@ const groundFriction = 0.2;
 const maxSpeed = 10;
 const groundAcceleration = maxSpeed * groundFriction / (-groundFriction + 1.0);
 
-class Player{
-    constructor(x, y) {
+class PlayerState {
+    constructor(x = 0, y = 0, velX = 0, velY = 0) {
         this.x = x;
         this.y = y;
 
-        this.lastX = x;
-        this.lastY = y;
+        this.velX = velX;
+        this.velY = velY;
+    }
+}
 
-        this.velX = 0;
-        this.velY = 0;
+class Player{
+    constructor(x, y) {
+        this.states = [];
+        this.states.unshift(new PlayerState(x, y));
 
         this.collider = new Collider(x, y, playerWidth, playerHeight);
     }
@@ -28,8 +32,13 @@ class Player{
     draw = (ctx, interp) => {
         // Get the position to draw the player in
         // It interpolates between the position two ticks, and on tick ago
-        let drawX = lerp(this.lastX, this.x, interp);
-        let drawY = lerp(this.lastY, this.y, interp);
+        let drawX = this.states[0].x;
+        let drawY = this.states[0].y;
+
+        if(this.states.length > 1) {
+            drawX = lerp(this.states[1].x, this.states[0].x, interp);
+            drawY = lerp(this.states[1].y, this.states[0].y, interp);
+        }
 
         // Draw the player
         ctx.fillStyle = 'green';
@@ -37,31 +46,42 @@ class Player{
     }
 
     tick = () => {
-        // Record the last position (used for draw interpolation)
-        this.lastX = this.x;
-        this.lastY = this.y;
+        let stateThisTick = this.getCopyOfLastState();
 
         if (localInput.left && !localInput.right) {
-            this.velX -= groundAcceleration;
+            stateThisTick.velX -= groundAcceleration;
         }
         else if(localInput.right && !localInput.left) {
-            this.velX += groundAcceleration;
+            stateThisTick.velX += groundAcceleration;
         }
-        this.velX -= this.velX * groundFriction;
-        this.x += this.velX;
+        stateThisTick.velX -= stateThisTick.velX * groundFriction;
+        stateThisTick.x += stateThisTick.velX;
 
         // Add and apply gravity
-        this.velY += gravity;
-        this.y += this.velY;
+        stateThisTick.velY += gravity;
+        stateThisTick.y += stateThisTick.velY;
 
+        this.doCollisions(stateThisTick);
+        this.states.unshift(stateThisTick);
+    }
+
+    doCollisions = (state) => {
         // Copy the players position to the collider
-        this.collider.x = this.x;
-        this.collider.y = this.y;
+        this.collider.x = state.x;
+        this.collider.y = state.y;
 
         if(this.collider.getBottom() >= gameWorld.height) {
-            this.y = gameWorld.height - playerHeight;
-            this.velY = 0;
+            state.y = gameWorld.height - playerHeight;
+            state.velY = 0;
         }
+    }
+
+    getCopyOfLastState = () =>{
+        return new PlayerState(
+            this.states[0].x, 
+            this.states[0].y, 
+            this.states[0].velX, 
+            this.states[0].velY);
     }
 }
 

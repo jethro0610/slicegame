@@ -18,12 +18,19 @@ class GameWorld {
     }
 
     doTicks = () => {
+        // Get the amount of time between the last tick and now
         const frameInterval = performance.now() - this.lastTickTime;
+
+        // Add the interval to the accumulator
         this.frameAccumulator += frameInterval;
+
+        // If the a whole frame or more has accumulated, tick the world
         while(this.frameAccumulator >= frameTime) {
             this.tick();
             this.frameAccumulator -= frameTime;
         }
+
+        // Record the time of this tick
         this.lastTickTime = performance.now();
     }
 
