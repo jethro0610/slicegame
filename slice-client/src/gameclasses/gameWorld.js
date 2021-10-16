@@ -1,12 +1,23 @@
 import Player from "./player";
-import { frameTime } from "./game";
+import { frameTime, maxStateRecordings } from "./game";
+import localInput from "./input";
+
+class GameState {
+    constructor(player1State) {
+        this.player1State = player1State;
+    }
+}
 
 class GameWorld {
     constructor(width, height) {
         this.width = width;
         this.height = height;
 
+        this.states = [];
+
+        // Create player 1 and copy their state to the first game state
         this.player1 = new Player(0, 0);
+        this.states.unshift(new GameState(this.player1.state));
 
         this.lastTickTime = performance.now();
         this.frameAccumulator = 0;
@@ -35,7 +46,12 @@ class GameWorld {
     }
 
     tick = () => {
-        this.player1.tick();
+        // Tick the player and get the new state
+        let player1StateThisTick = this.player1.tick(this.states[0].player1State, localInput);
+        // Put the new player state at the beginning of the game states
+        this.states.unshift(new GameState(player1StateThisTick));
+        // Limit the number of game states
+        this.states.length = Math.min(this.states.length, maxStateRecordings);
     }
 }
 

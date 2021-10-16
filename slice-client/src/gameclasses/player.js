@@ -1,6 +1,5 @@
 import Collider from "./collider";
 import { gameWorld, lerp } from "./game";
-import localInput from "./input";
 
 const playerWidth = 32;
 const playerHeight = 32
@@ -19,50 +18,52 @@ class PlayerState {
         this.velX = velX;
         this.velY = velY;
     }
+    copy = () =>{
+        return new PlayerState(
+            this.x, 
+            this.y, 
+            this.velX, 
+            this.velY);
+    }
 }
 
 class Player{
     constructor(x, y) {
-        this.states = [];
-        this.states.unshift(new PlayerState(x, y));
-
-        this.collider = new Collider(x, y, playerWidth, playerHeight);
+        this.state = new PlayerState(x, y);
+        this.prevState = this.state;
+        this.collider = new Collider(0, 0, playerWidth, playerHeight);
     }
 
     draw = (ctx, interp) => {
         // Get the position to draw the player in
         // It interpolates between the position two ticks, and on tick ago
-        let drawX = this.states[0].x;
-        let drawY = this.states[0].y;
-
-        if(this.states.length > 1) {
-            drawX = lerp(this.states[1].x, this.states[0].x, interp);
-            drawY = lerp(this.states[1].y, this.states[0].y, interp);
-        }
+        let drawX = lerp(this.prevState.x, this.state.x, interp);
+        let drawY = lerp(this.prevState.y, this.state.y, interp);
 
         // Draw the player
         ctx.fillStyle = 'green';
         ctx.fillRect(drawX, drawY, playerWidth, playerHeight);
     }
 
-    tick = () => {
-        let stateThisTick = this.getCopyOfLastState();
+    tick = (prevState, input) => {
+        this.prevState = prevState;
+        this.state = prevState.copy();
 
-        if (localInput.left && !localInput.right) {
-            stateThisTick.velX -= groundAcceleration;
+        if (input.left && !input.right) {
+            this.state.velX -= groundAcceleration;
         }
-        else if(localInput.right && !localInput.left) {
-            stateThisTick.velX += groundAcceleration;
+        else if(input.right && !input.left) {
+            this.state.velX += groundAcceleration;
         }
-        stateThisTick.velX -= stateThisTick.velX * groundFriction;
-        stateThisTick.x += stateThisTick.velX;
+        this.state.velX -= this.state.velX * groundFriction;
+        this.state.x += this.state.velX;
 
         // Add and apply gravity
-        stateThisTick.velY += gravity;
-        stateThisTick.y += stateThisTick.velY;
+        this.state.velY += gravity;
+        this.state.y += this.state.velY;
 
-        this.doCollisions(stateThisTick);
-        this.states.unshift(stateThisTick);
+        this.doCollisions(this.state);
+        return this.state;
     }
 
     doCollisions = (state) => {
@@ -74,14 +75,6 @@ class Player{
             state.y = gameWorld.height - playerHeight;
             state.velY = 0;
         }
-    }
-
-    getCopyOfLastState = () =>{
-        return new PlayerState(
-            this.states[0].x, 
-            this.states[0].y, 
-            this.states[0].velX, 
-            this.states[0].velY);
     }
 }
 
