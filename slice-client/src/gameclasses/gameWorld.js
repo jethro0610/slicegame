@@ -8,20 +8,26 @@ class GameWorld {
 
         this.player1 = new Player(0, 0);
 
-        this.tickTime = Date.now();
-        this.lastTickTime = this.tickTime;
+        this.lastTickTime = performance.now();
+        this.frameAccumulator = 0;
     }
 
     draw = ctx => {
-        let interp =  (Date.now() - this.lastTickTime - frameTime * 2) / frameTime;
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-        this.player1.draw(ctx, interp);
+        this.player1.draw(ctx, this.frameAccumulator / frameTime);
+    }
+
+    doTicks = () => {
+        const frameInterval = performance.now() - this.lastTickTime;
+        this.frameAccumulator += frameInterval;
+        while(this.frameAccumulator >= frameTime) {
+            this.tick();
+            this.frameAccumulator -= frameTime;
+        }
+        this.lastTickTime = performance.now();
     }
 
     tick = () => {
-        this.lastTickTime = this.tickTime;
-        this.tickTime = Date.now();
-
         this.player1.tick();
     }
 }
