@@ -11,13 +11,14 @@ const maxSpeed = 10;
 const groundAcceleration = maxSpeed * groundFriction / (-groundFriction + 1.0);
 
 class PlayerState {
-    constructor(x = 0, y = 0, velX = 0, velY = 0) {
+    constructor(x = 0, y = 0, velX = 0, velY = 0, onGround = false) {
         this.x = x;
         this.y = y;
 
         this.velX = velX;
         this.velY = velY;
     }
+
     copy = () =>{
         return new PlayerState(
             this.x, 
@@ -46,9 +47,13 @@ class Player{
     }
 
     tick = (prevState, input) => {
+        // Store the previous state and copy it into the current state
         this.prevState = prevState;
         this.state = prevState.copy();
 
+        let onGround = this.doGroundCollision(this.state, input.down);
+
+        // Movement
         if (input.left && !input.right) {
             this.state.velX -= groundAcceleration;
         }
@@ -59,22 +64,66 @@ class Player{
         this.state.x += this.state.velX;
 
         // Add and apply gravity
-        this.state.velY += gravity;
+        if(!onGround)
+            this.state.velY += gravity;
         this.state.y += this.state.velY;
 
-        this.doCollisions(this.state);
+        // Do wall collisions last, so player stays within bounds
+        this.doWallCollision(this.state);
+
         return this.state;
     }
 
-    doCollisions = (state) => {
-        // Copy the players position to the collider
-        this.collider.x = state.x;
-        this.collider.y = state.y;
+    doGroundCollision = (state, shouldDrop) => {
+        this.collider.x = this.state.x;
+        this.collider.y = this.state.y;
+        let onGround = false;
 
-        if(this.collider.getBottom() >= gameWorld.height) {
-            state.y = gameWorld.height - playerHeight;
-            state.velY = 0;
-        }
+        gameWorld.platforms.forEach(platform => {
+            // If player is within horizontal bounds of platform...
+            if(this.collider.getRight() >= platform.getLeft() && this.collider.getLeft() <= platform.getRight()){
+                // If player is on top of platform...
+                if(this.collider.getBottom() >= platform.getTop() && this.collider.getTop() <= platform.getTop() && !shouldDrop && this.state.velY >= 0) {
+                    onGround = true;
+                    state.y = platform.getTop() - playerHeight;
+                    state.velY = 0;
+                }
+            }
+        });
+
+        if(this.collider.getBottom() >= gameWorld.height){
+			if(state.velY >= 0){
+                state.onGround = true;
+				state.y = gameWorld.height - this.collider.height;
+				state.velY = 0;
+			}
+		}
+
+        this.collider.x = this.state.x;
+        this.collider.y = this.state.y;
+        return onGround;
+    }
+
+    doWallCollision = (state) => {
+        // Copy the players position to the collider
+        this.collider.x = this.state.x;
+        this.collider.y = this.state.y;
+
+        // Check for collision with walls
+		if(this.collider.getRight() >= gameWorld.width){
+			state.x = gameWorld.width - this.collider.width;
+			state.velX = 0;
+		}
+		if(this.collider.getLeft() <= 0){
+			state.x = 0;
+			state.velX = 0;
+		}
+		if(this.collider.getTop() <= 0){
+			state.y = 0;
+		}
+
+        this.collider.x = this.state.x;
+        this.collider.y = this.state.y;
     }
 }
 

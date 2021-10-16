@@ -1,6 +1,7 @@
 import Player from "./player";
 import { frameTime, maxStateRecordings } from "./game";
 import localInput from "./input";
+import Collider from "./collider";
 
 class GameState {
     constructor(player1State) {
@@ -12,12 +13,14 @@ class GameWorld {
     constructor(width, height) {
         this.width = width;
         this.height = height;
-
         this.states = [];
 
         // Create player 1 and copy their state to the first game state
         this.player1 = new Player(0, 0);
         this.states.unshift(new GameState(this.player1.state));
+
+        this.platforms = [];
+        this.platforms.push(new Collider(100, 400, 200, 16));
 
         this.lastTickTime = performance.now();
         this.frameAccumulator = 0;
@@ -26,6 +29,11 @@ class GameWorld {
     draw = ctx => {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         this.player1.draw(ctx, this.frameAccumulator / frameTime);
+        this.platforms.forEach(platform => {
+            // Draw the platform
+            ctx.fillStyle = 'black';
+            ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+        });
     }
 
     doTicks = () => {
