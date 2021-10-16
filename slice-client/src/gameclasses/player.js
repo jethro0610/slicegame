@@ -5,7 +5,7 @@ const playerWidth = 32;
 const playerHeight = 32
 const gravity = 1;
 
-const groundFriction = 0.2;
+const groundFriction = 0.1;
 const airFriction = 0.05
 const maxSpeed = 10;
 const groundAcceleration = maxSpeed * groundFriction / (-groundFriction + 1.0);
@@ -14,12 +14,14 @@ const airAcceleration = maxSpeed * airFriction / (-airFriction + 1.0);
 const jumpStrength = 20;
 
 class PlayerState {
-    constructor(x = 0, y = 0, velX = 0, velY = 0) {
+    constructor(x = 0, y = 0, velX = 0, velY = 0, airJumpsUsed = 0) {
         this.x = x;
         this.y = y;
 
         this.velX = velX;
         this.velY = velY;
+
+        this.airJumpsUsed = airJumpsUsed;
     }
 
     copy = () =>{
@@ -27,7 +29,8 @@ class PlayerState {
             this.x, 
             this.y, 
             this.velX, 
-            this.velY);
+            this.velY,
+            this.airJumpsUsed);
     }
 }
 
@@ -54,11 +57,17 @@ class Player{
         this.prevState = prevState;
         this.state = prevState.copy();
 
-        // Ground Movement
         let onGround = this.doGroundCollision(this.state, input.down);
-        // Use accekeration and friction based on ground or air
+        // Use acceleration and friction based on ground or air
         let acceleration = onGround ? groundAcceleration : airAcceleration;
         let friction = onGround ? groundFriction : airFriction;
+
+        if(onGround) {
+            this.state.airJumpsUsed = 0;
+            this.calculateReversal(this.state, input); // For dash dancing
+        }
+
+        // Ground Movement
         if (input.left && !input.right)
             this.state.velX -= acceleration;
         else if(input.right && !input.left)
@@ -70,8 +79,15 @@ class Player{
             this.state.velY += gravity;
 
         // Jumping
-        if (onGround && input.up && !prevInput.up)
-            this.state.velY = -jumpStrength;
+        if (input.up && !prevInput.up) {
+            if(onGround)
+                this.state.velY = -jumpStrength;
+            else if(this.state.airJumpsUsed < 1) {
+                this.state.airJumpsUsed += 1;
+                this.state.velY = -jumpStrength;
+                this.calculateReversal(this.state, input);
+            }
+        }
 
         // Apply velocities
         this.state.x += this.state.velX;
@@ -81,6 +97,13 @@ class Player{
         this.doWallCollision(this.state);
 
         return this.state;
+    }
+
+    calculateReversal = (state, input) => {
+        if(!(input.left && input.right)) {
+            if((input.left && state.velX > 0) || (input.right && state.velX < 0))
+                state.velX = -state.velX;
+        }
     }
 
     doGroundCollision = (state, shouldDrop) => {
