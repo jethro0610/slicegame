@@ -5,13 +5,16 @@ const playerWidth = 32;
 const playerHeight = 32
 const gravity = 1;
 
-
 const groundFriction = 0.2;
+const airFriction = 0.05
 const maxSpeed = 10;
 const groundAcceleration = maxSpeed * groundFriction / (-groundFriction + 1.0);
+const airAcceleration = maxSpeed * airFriction / (-airFriction + 1.0);
+
+const jumpStrength = 20;
 
 class PlayerState {
-    constructor(x = 0, y = 0, velX = 0, velY = 0, onGround = false) {
+    constructor(x = 0, y = 0, velX = 0, velY = 0) {
         this.x = x;
         this.y = y;
 
@@ -37,7 +40,7 @@ class Player{
 
     draw = (ctx, interp) => {
         // Get the position to draw the player in
-        // It interpolates between the position two ticks, and on tick ago
+        // It interpolates between the position the current and last tick
         let drawX = lerp(this.prevState.x, this.state.x, interp);
         let drawY = lerp(this.prevState.y, this.state.y, interp);
 
@@ -46,26 +49,32 @@ class Player{
         ctx.fillRect(drawX, drawY, playerWidth, playerHeight);
     }
 
-    tick = (prevState, input) => {
+    tick = (prevState, input, prevInput) => {
         // Store the previous state and copy it into the current state
         this.prevState = prevState;
         this.state = prevState.copy();
 
+        // Ground Movement
         let onGround = this.doGroundCollision(this.state, input.down);
+        // Use accekeration and friction based on ground or air
+        let acceleration = onGround ? groundAcceleration : airAcceleration;
+        let friction = onGround ? groundFriction : airFriction;
+        if (input.left && !input.right)
+            this.state.velX -= acceleration;
+        else if(input.right && !input.left)
+            this.state.velX += acceleration;
+        this.state.velX -= this.state.velX * friction;
 
-        // Movement
-        if (input.left && !input.right) {
-            this.state.velX -= groundAcceleration;
-        }
-        else if(input.right && !input.left) {
-            this.state.velX += groundAcceleration;
-        }
-        this.state.velX -= this.state.velX * groundFriction;
-        this.state.x += this.state.velX;
-
-        // Add and apply gravity
+        // Gravity
         if(!onGround)
             this.state.velY += gravity;
+
+        // Jumping
+        if (onGround && input.up && !prevInput.up)
+            this.state.velY = -jumpStrength;
+
+        // Apply velocities
+        this.state.x += this.state.velX;
         this.state.y += this.state.velY;
 
         // Do wall collisions last, so player stays within bounds
@@ -93,7 +102,7 @@ class Player{
 
         if(this.collider.getBottom() >= gameWorld.height){
 			if(state.velY >= 0){
-                state.onGround = true;
+                onGround = true;
 				state.y = gameWorld.height - this.collider.height;
 				state.velY = 0;
 			}
