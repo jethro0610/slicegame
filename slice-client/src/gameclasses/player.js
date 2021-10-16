@@ -2,7 +2,7 @@ import Collider from "./collider";
 import { gameWorld, lerp } from "./game";
 
 const playerWidth = 32;
-const playerHeight = 32
+const playerHeight = 64;
 const gravity = 1.5;
 
 const groundFriction = 0.1;
@@ -103,7 +103,6 @@ class Player{
         if((!onGround && !this.isInDashState()) || this.isInCooldownFall()) // Only apply when not dashing or in cooldown fall
             this.state.velY += gravity;
 
-
         // Jumping
         if (input.up && !prevInput.up && !this.isInDashState()) {
             if(onGround)
@@ -121,15 +120,12 @@ class Player{
             this.state.velY = this.state.velY * dashYTransfer;
             this.state.dash = dashLength;
         }
-
         // Subtract from dash timer and apply velocity
         if (this.state.dash > 0)
             this.state.dash -= 1;
-
         // Subtract from the cooldown timer
         if (this.state.cooldown > 0)
             this.state.cooldown -= 1;
-
         // Apply cooldown slide
         if (this.state.dash <= 0 && this.state.dash !== false && this.state.cooldown === false) {
             this.state.cooldown = cooldownLength;
