@@ -15,7 +15,7 @@ class GameWorld {
         this.height = height;
         this.states = [];
         this.localInputs = [];
-        this.localInputs.push({up: false, down: false, left: false, right:false});
+        this.localInputs.push({up: false, down: false, left: false, right:false, dash: false});
 
         // Create player 1 and copy their state to the first game state
         this.player1 = new Player(0, 0);

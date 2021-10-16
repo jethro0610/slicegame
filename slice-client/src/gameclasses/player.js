@@ -3,18 +3,27 @@ import { gameWorld, lerp } from "./game";
 
 const playerWidth = 32;
 const playerHeight = 32
-const gravity = 1;
+const gravity = 1.5;
 
 const groundFriction = 0.1;
-const airFriction = 0.05
+const airFriction = 0.05;
 const maxSpeed = 10;
 const groundAcceleration = maxSpeed * groundFriction / (-groundFriction + 1.0);
 const airAcceleration = maxSpeed * airFriction / (-airFriction + 1.0);
 
-const jumpStrength = 20;
+const jumpStrength = 25;
+const maxAirJumps = 2;
+const jumpReversalSpeed = 1.5;
+
+const dashLength = 8;
+const dashSpeed = 50;
+const dashYTransfer = 0.5;
+
+const cooldownLength = 40;
+const cooldownSpeed = 0.015;
 
 class PlayerState {
-    constructor(x = 0, y = 0, velX = 0, velY = 0, airJumpsUsed = 0) {
+    constructor(x = 0, y = 0, velX = 0, velY = 0, airJumpsUsed = 0, dash = false, cooldown = false, right = true) {
         this.x = x;
         this.y = y;
 
@@ -22,6 +31,10 @@ class PlayerState {
         this.velY = velY;
 
         this.airJumpsUsed = airJumpsUsed;
+        this.dash = dash;
+        this.cooldown = cooldown;
+
+        this.right = right;
     }
 
     copy = () =>{
@@ -30,7 +43,10 @@ class PlayerState {
             this.y, 
             this.velX, 
             this.velY,
-            this.airJumpsUsed);
+            this.airJumpsUsed,
+            this.dash,
+            this.cooldown,
+            this.right);
     }
 }
 
@@ -58,35 +74,67 @@ class Player{
         this.state = prevState.copy();
 
         let onGround = this.doGroundCollision(this.state, input.down);
-        // Use acceleration and friction based on ground or air
-        let acceleration = onGround ? groundAcceleration : airAcceleration;
-        let friction = onGround ? groundFriction : airFriction;
-
         if(onGround) {
-            this.state.airJumpsUsed = 0;
-            this.calculateReversal(this.state, input); // For dash dancing
+            // Reset the dash
+            this.state.dash = false;
+            this.state.cooldown = false;
+
+            this.state.airJumpsUsed = 0; // Reset air jumps
+            this.calculateReversal(this.state, input); // Dash dance
         }
 
         // Ground Movement
-        if (input.left && !input.right)
-            this.state.velX -= acceleration;
-        else if(input.right && !input.left)
-            this.state.velX += acceleration;
-        this.state.velX -= this.state.velX * friction;
+        // Use acceleration and friction based on ground or air
+        if(!this.isInDashState()) {
+            let acceleration = onGround ? groundAcceleration : airAcceleration;
+            let friction = onGround ? groundFriction : airFriction;
+            if (input.left && !input.right) {
+                this.state.velX -= acceleration;
+                this.state.right = false;
+            }
+            else if(input.right && !input.left) {
+                this.state.velX += acceleration;
+                this.state.right = true;
+            }
+            this.state.velX -= this.state.velX * friction;
+        }
 
-        // Gravity
-        if(!onGround)
+        // Apply gravity
+        if((!onGround && !this.isInDashState()) || this.isInCooldownFall()) // Only apply when not dashing or in cooldown fall
             this.state.velY += gravity;
 
+
         // Jumping
-        if (input.up && !prevInput.up) {
+        if (input.up && !prevInput.up && !this.isInDashState()) {
             if(onGround)
                 this.state.velY = -jumpStrength;
-            else if(this.state.airJumpsUsed < 1) {
+            else if(this.state.airJumpsUsed < maxAirJumps) {
                 this.state.airJumpsUsed += 1;
                 this.state.velY = -jumpStrength;
-                this.calculateReversal(this.state, input);
+                this.calculateReversal(this.state, input, jumpReversalSpeed);
             }
+        }
+
+        // Dashing
+        if(input.dash && !prevInput.dash && !onGround && !this.isInDashState()) {
+            this.state.velX = this.state.right ? dashSpeed : -dashSpeed;
+            this.state.velY = this.state.velY * dashYTransfer;
+            this.state.dash = dashLength;
+        }
+
+        // Subtract from dash timer and apply velocity
+        if (this.state.dash > 0)
+            this.state.dash -= 1;
+
+        // Subtract from the cooldown timer
+        if (this.state.cooldown > 0)
+            this.state.cooldown -= 1;
+
+        // Apply cooldown slide
+        if (this.state.dash <= 0 && this.state.dash !== false && this.state.cooldown === false) {
+            this.state.cooldown = cooldownLength;
+            this.state.velX = this.state.velX * cooldownSpeed;
+            this.state.velY = this.state.velY * cooldownSpeed;
         }
 
         // Apply velocities
@@ -99,10 +147,22 @@ class Player{
         return this.state;
     }
 
-    calculateReversal = (state, input) => {
+    isDashing = () => {
+        return this.state.dash > 0;
+    }
+
+    isInDashState = () => {
+        return !(this.state.dash === false && this.state.cooldown === false);
+    }
+
+    isInCooldownFall = () => {
+        return this.state.cooldown === 0;
+    }
+
+    calculateReversal = (state, input, scalar = 1) => {
         if(!(input.left && input.right)) {
             if((input.left && state.velX > 0) || (input.right && state.velX < 0))
-                state.velX = -state.velX;
+                state.velX = -state.velX * scalar;
         }
     }
 
