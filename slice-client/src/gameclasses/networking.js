@@ -5,6 +5,18 @@ let client = new Peer();
 let remote = null;
 let isHost = false;
 
+let ping = 0;
+let pingRequestTime = 0;
+
+// Request ping every second
+setInterval(() => {
+    if (remote == null) 
+        return;
+
+    remote.send('request-ping');
+    pingRequestTime = performance.now();
+}, 1000);
+
 client.on('open', (id) => {
     console.log('Opened PeerJS connection with ID: ' + id);
 });
@@ -21,6 +33,7 @@ const setRemote = (conn) => {
 
     conn.on('open', () => {
         console.log('Remote connection opened.');
+        remote = conn;
         startGame(conn, isHost);
     });
 
@@ -30,16 +43,21 @@ const setRemote = (conn) => {
     })
 
     conn.on('error', err => {
-        console.log('Remote client error: ' + err.type);
+        console.log('Remote client error: ' + err);
         onCloseRemote();
     });
 
     conn.on('data', data => {
         if (data.frame != undefined)
             gameWorld.onRecieveRemoteInput(data);
-    })
 
-    remote = conn;
+        if(data === 'request-ping')
+            conn.send('ping');
+
+        if(data === 'ping') {
+            ping = performance.now() - pingRequestTime;
+        }
+    })
 }
 
 const onCloseRemote = () => {
@@ -68,4 +86,4 @@ window.disconnectFromRemote = () => {
     disconnect();
 }
 
-export default client;
+export { ping };

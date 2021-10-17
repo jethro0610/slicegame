@@ -2,6 +2,7 @@ import Player from "./player";
 import { frameTime } from "./game";
 import { getDefaultInput, getLocalInput } from "./input";
 import Collider from "./collider";
+import { ping } from "./networking";
 
 const maxRollbackFrames = 300;
 const mapSetCapped = (map, key, value, cap) => {
@@ -81,8 +82,8 @@ class GameWorld {
 
     // Increases frame time whenever client is ahead of remote (slows game down)
     syncClockWithRemote = () => {
-        if(this.tickCount > this.remoteTickCount)
-            this.tickWaitTime = frameTime / 2.0;
+        if(this.tickCount > (this.remoteTickCount + (ping / 2) / frameTime) + 1)
+            this.tickWaitTime = frameTime;
         else
             this.tickWaitTime = 0;
     }
