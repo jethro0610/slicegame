@@ -12,11 +12,8 @@ const mapSetCapped = (map, key, value, cap) => {
     }
 }
 
-class GameState {
-    constructor(player1State, player2State) {
-        this.player1State = player1State;
-        this.player2State = player2State;
-    }
+const createGameState = (player1State, player2State) => {
+    return { player1State, player2State};
 }
 
 class GameWorld {
@@ -41,7 +38,7 @@ class GameWorld {
         this.remoteInputs.set(0, getDefaultInput());
 
         // Create player 1 and copy their state to the first game state
-        this.states.set(0, new GameState(createPlayerState(0, 0), createPlayerState(200, 0)));
+        this.states.set(0, createGameState(createPlayerState(0, 0), createPlayerState(200, 0)));
 
         this.platforms = [];
         this.platforms.push(new Collider(100, 400, 200, 16));
@@ -58,7 +55,7 @@ class GameWorld {
             drawPlayerFromState(ctx, this.states.get(this.tickCount).player1State, this.states.get(this.tickCount - 1).player1State, drawInterp);
             drawPlayerFromState(ctx, this.states.get(this.tickCount).player2State, this.states.get(this.tickCount - 1).player2State, drawInterp);
         }
-        
+
         this.platforms.forEach(platform => {
             // Draw the platform
             ctx.fillStyle = 'black';
@@ -98,7 +95,7 @@ class GameWorld {
         mapSetCapped(this.localInputs, this.tickCount, localInput, maxRollbackFrames);
     }
 
-    gameTick = (stateTickCount, player1Input, prevPlayer1Input, player2Input, prevPlayer2Input) => {
+    tickGameState = (stateTickCount, player1Input, prevPlayer1Input, player2Input, prevPlayer2Input) => {
         let player1StateThisTick = tickPlayerState(
             this.states.get(stateTickCount - 1).player1State, 
             player1Input, 
@@ -109,7 +106,7 @@ class GameWorld {
             player2Input, 
             prevPlayer2Input);
         // Put the new player state at the beginning of the game states
-        mapSetCapped(this.states, stateTickCount, new GameState(player1StateThisTick, player2StateThisTick), maxRollbackFrames);
+        mapSetCapped(this.states, stateTickCount, createGameState(player1StateThisTick, player2StateThisTick), maxRollbackFrames);
     }
 
     tick = () => {
@@ -141,7 +138,7 @@ class GameWorld {
         }
 
         // Tick the game
-        this.gameTick(this.tickCount, player1Input, prevPlayer1Input, player2Input, prevPlayer2Input);
+        this.tickGameState(this.tickCount, player1Input, prevPlayer1Input, player2Input, prevPlayer2Input);
     }
 
     onRecieveRemoteInput = (remoteInput) => {
@@ -195,7 +192,7 @@ class GameWorld {
                 player1Input = this.remoteInputs.get(lastValidInput);
                 prevPlayer1Input = this.remoteInputs.get(missingInput ? lastValidInput : lastValidInput - 1);
             }
-            this.gameTick(i, player1Input, prevPlayer1Input, player2Input, prevPlayer2Input);
+            this.tickGameState(i, player1Input, prevPlayer1Input, player2Input, prevPlayer2Input);
         }
 
         // Reset rollback ticks so rollback's aren't executed till next input
