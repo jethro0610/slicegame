@@ -76,41 +76,48 @@ class GameWorld {
         this.lastTickTime = performance.now();
     }
 
-    tick = () => {
-        this.executeRollback();
-
+    syncClockWithRemote = () => {
         if(this.tickCount > this.remoteTickCount)
             this.tickWaitTime = frameTime / 2.0;
         else
             this.tickWaitTime = 0;
-        this.tickCount++;
+    }
 
+    recordAndSendLocalInput = () => {
         const localInput = getLocalInput();
         this.remote.send({frame: this.tickCount, input: localInput});
         mapSetCapped(this.localInputs, this.tickCount, localInput, maxRollbackFrames);
+    }
 
-        let player1StateThisTick;
-        if (this.isHost) {
-            // Tick the player and get the new state
-            player1StateThisTick = this.player1.tick(
-                this.states.get(this.tickCount - 1).player1State, 
-                this.localInputs.get(this.tickCount), 
-                this.localInputs.get(this.tickCount - 1));
-        }
-        else {
-           
-            const remoteInputIndex = Math.min(this.remoteTickCount, this.tickCount);
-            const prevRemoteInputIndex = Math.max(remoteInputIndex, 0);
-
-            // Tick the player and get the new state
-            player1StateThisTick = this.player1.tick(
-                this.states.get(this.tickCount - 1).player1State, 
-                this.remoteInputs.get(remoteInputIndex), 
-                this.remoteInputs.get(prevRemoteInputIndex));
-        }
+    gameTick = (stateTickCount, player1Input, prevPlayer1Input) => {
+        let player1StateThisTick = this.player1.tick(
+            this.states.get(stateTickCount - 1).player1State, 
+            player1Input, 
+            prevPlayer1Input);
 
         // Put the new player state at the beginning of the game states
-        mapSetCapped(this.states, this.tickCount, new GameState(player1StateThisTick), maxRollbackFrames);
+        mapSetCapped(this.states, stateTickCount, new GameState(player1StateThisTick), maxRollbackFrames);
+    }
+
+    tick = () => {
+        this.syncClockWithRemote();
+        this.executeRollback();
+
+        this.tickCount++;
+        this.recordAndSendLocalInput();
+
+        let player1Input, prevPlayer1Input;
+        if (this.isHost) {
+            player1Input = this.localInputs.get(this.tickCount); 
+            prevPlayer1Input = this.localInputs.get(this.tickCount - 1);
+        }
+        else {
+            const remoteInputIndex = Math.min(this.remoteTickCount, this.tickCount);
+            const prevRemoteInputIndex = Math.max(remoteInputIndex, 0);
+            player1Input = this.remoteInputs.get(remoteInputIndex);
+            prevPlayer1Input = this.remoteInputs.get(prevRemoteInputIndex);
+        }
+        this.gameTick(this.tickCount, player1Input, prevPlayer1Input);
     }
 
     onRecieveRemoteInput = (remoteInput) => {
@@ -138,26 +145,17 @@ class GameWorld {
             else
                 missingInput = true;
 
-            let player1StateThisTick;
+            let player1Input, prevPlayer1Input;
             if (this.isHost) {
-                // Tick the player and get the new state
-                player1StateThisTick = this.player1.tick(
-                    this.states.get(i - 1).player1State, 
-                    this.localInputs.get(i), 
-                    this.localInputs.get(i - 1));
+                player1Input = this.localInputs.get(i);
+                prevPlayer1Input = this.localInputs.get(i - 1);
             }
             else {
-                // Tick the player and get the new state
-                player1StateThisTick = this.player1.tick(
-                    this.states.get(i - 1).player1State, 
-                    this.remoteInputs.get(lastValidInput), 
-                    this.remoteInputs.get(missingInput ? lastValidInput : lastValidInput - 1));
+                player1Input = this.remoteInputs.get(lastValidInput);
+                prevPlayer1Input = this.remoteInputs.get(missingInput ? lastValidInput : lastValidInput - 1);
             }
-
-            // Put the new player state at the beginning of the game states
-            this.states.set(i, new GameState(player1StateThisTick));
+            this.gameTick(i, player1Input, prevPlayer1Input);
         }
-
         this.rollbackTick = Infinity;
     }
 }
