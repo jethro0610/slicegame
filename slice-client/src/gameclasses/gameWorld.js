@@ -11,22 +11,25 @@ class GameState {
 
 class GameWorld {
     constructor(width, height, remote, isHost) {
-        this.isHost = isHost;
-        this.remote = remote;
         this.width = width;
         this.height = height;
-        this.states = [];
-        this.currentFrame = 0;
-        this.lastFrameWithRemoteInput = 0;
-        this.frameTimeAdd = 0;
-        this.localInputs = [];
-        this.localInputs.push(getDefaultInput());
-        this.remoteInputs = [];
-        this.remoteInputs.push({ frame: 0, input: getDefaultInput()});
+
+        this.isHost = isHost;
+        this.remote = remote;
+
+        this.states = new Map();
+        this.tickCount = 0;
+        this.remoteTickCount = 0;
+        this.tickWaitTime = 0;
+
+        this.localInputs = new Map();
+        this.localInputs.set(0, getDefaultInput());
+        this.remoteInputs = new Map();
+        this.remoteInputs.set(0, getDefaultInput());
 
         // Create player 1 and copy their state to the first game state
         this.player1 = new Player(0, 0);
-        this.states.unshift(new GameState(this.player1.state));
+        this.states.set(0, new GameState(this.player1.state));
 
         this.platforms = [];
         this.platforms.push(new Collider(100, 400, 200, 16));
@@ -37,7 +40,7 @@ class GameWorld {
 
     draw = ctx => {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-        this.player1.draw(ctx, this.frameAccumulator / (frameTime + this.frameTimeAdd));
+        this.player1.draw(ctx, this.frameAccumulator / (frameTime + this.tickWaitTime));
         this.platforms.forEach(platform => {
             // Draw the platform
             ctx.fillStyle = 'black';
@@ -53,9 +56,9 @@ class GameWorld {
         this.frameAccumulator += frameInterval;
 
         // If the a whole frame or more has accumulated, tick the world
-        while(this.frameAccumulator >= frameTime + this.frameTimeAdd) {
+        while(this.frameAccumulator >= frameTime + this.tickWaitTime) {
             this.tick();
-            this.frameAccumulator -= frameTime + this.frameTimeAdd;
+            this.frameAccumulator -= frameTime + this.tickWaitTime;
         }
 
         // Record the time of this tick
@@ -63,64 +66,55 @@ class GameWorld {
     }
 
     tick = () => {
-        if(this.currentFrame > this.remoteInputs.length && !this.isHost)
-            this.frameTimeAdd = frameTime / 2.0;
+        if(this.tickCount > this.remoteTickCount && !this.isHost)
+            this.tickWaitTime = frameTime / 2.0;
         else
-            this.frameTimeAdd = 0;
+            this.tickWaitTime = 0;
 
-        this.currentFrame++;
+        this.tickCount++;
         if(this.isHost) {
             const localInput = getLocalInput();
-            this.remote.send({frame: this.currentFrame, input: localInput});
-            this.localInputs.push(localInput);
+            this.remote.send({frame: this.tickCount, input: localInput});
+            this.localInputs.set(this.tickCount, localInput);
 
             // Tick the player and get the new state
             let player1StateThisTick = this.player1.tick(
-                this.states[this.currentFrame - 1].player1State, 
-                this.localInputs[this.currentFrame], 
-                this.localInputs[this.currentFrame - 1]);
+                this.states.get(this.tickCount - 1).player1State, 
+                this.localInputs.get(this.tickCount), 
+                this.localInputs.get(this.tickCount - 1));
 
             // Put the new player state at the beginning of the game states
-            this.states.push(new GameState(player1StateThisTick));
+            this.states.set(this.tickCount, new GameState(player1StateThisTick));
         }
         else {
-            const greatestRemoteInput = Math.min(this.remoteInputs.length - 1, this.currentFrame);
-            const greatestLastInput = Math.min(this.remoteInputs.length - 1, 0);
+            const remoteInputIndex = Math.min(this.remoteTickCount, this.tickCount);
+            const prevRemoteInputIndex = Math.min(remoteInputIndex, 0);
 
             // Tick the player and get the new state
             let player1StateThisTick = this.player1.tick(
-                this.states[this.currentFrame - 1].player1State, 
-                this.remoteInputs[greatestRemoteInput].input, 
-                this.remoteInputs[greatestLastInput].input);
+                this.states.get(this.tickCount - 1).player1State, 
+                this.remoteInputs.get(remoteInputIndex), 
+                this.remoteInputs.get(prevRemoteInputIndex));
 
             // Put the new player state at the beginning of the game states
-            this.states.push(new GameState(player1StateThisTick));
+            this.states.set(this.tickCount, new GameState(player1StateThisTick));
         }
     }
 
     onRecieveRemoteInput = (remoteInput) => {
-        this.remoteInputs.push(remoteInput);
-        this.remoteInputs.sort((a, b) => {
-            if(a.frame > b.frame)
-                return 1;
-            if(a.frame < b.frame)
-                return -1;
-            return 0;
-        });
+        if(remoteInput.frame > this.remoteTickCount)
+            this.remoteTickCount = remoteInput.frame;
+        this.remoteInputs.set(remoteInput.frame, remoteInput.input);
 
-        const minRollbackPoint = Math.min(remoteInput.frame, this.lastFrameWithRemoteInput + 1);
-        for(let i = minRollbackPoint; i <= this.currentFrame; i++) {
-            let greatestFrame = Math.min(i, this.remoteInputs.length - 1);
+        for(let i = remoteInput.frame; i <= this.tickCount; i++) {
+            let remoteInputIndex = Math.min(i, this.remoteTickCount);
             // Tick the player and get the new state
             let player1StateThisTick = this.player1.tick(
-                this.states[i - 1].player1State, 
-                this.remoteInputs[greatestFrame].input, 
-                this.remoteInputs[greatestFrame - 1].input);
+                this.states.get(i - 1).player1State, 
+                this.remoteInputs.get(remoteInputIndex), 
+                this.remoteInputs.get(remoteInputIndex - 1));
             // Put the new player state at the beginning of the game states
-            this.states[i] = new GameState(player1StateThisTick);
-
-            if(greatestFrame == i)
-                this.lastFrameWithRemoteInput = i;
+            this.states.set(i, new GameState(player1StateThisTick));
         }
     }
 }
