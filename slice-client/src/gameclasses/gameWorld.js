@@ -1,7 +1,15 @@
 import Player from "./player";
-import { frameTime, maxStateRecordings } from "./game";
+import { frameTime } from "./game";
 import { getDefaultInput, getLocalInput } from "./input";
 import Collider from "./collider";
+
+const maxRollbackFrames = 300;
+const mapSetCapped = (map, key, value, cap) => {
+    map.set(key, value);
+    if(key >= cap && map.has(key - cap)) {
+        map.delete(key - cap);
+    }
+}
 
 class GameState {
     constructor(player1State) {
@@ -21,6 +29,8 @@ class GameWorld {
         this.tickCount = 0;
         this.remoteTickCount = 0;
         this.tickWaitTime = 0;
+
+        this.lastRemoteInputTick = 0;
 
         this.localInputs = new Map();
         this.localInputs.set(0, getDefaultInput());
@@ -66,16 +76,17 @@ class GameWorld {
     }
 
     tick = () => {
+        //console.log(this.remoteInputs.size);
         if(this.tickCount > this.remoteTickCount && !this.isHost)
             this.tickWaitTime = frameTime / 2.0;
         else
             this.tickWaitTime = 0;
-
         this.tickCount++;
+
         if(this.isHost) {
             const localInput = getLocalInput();
             this.remote.send({frame: this.tickCount, input: localInput});
-            this.localInputs.set(this.tickCount, localInput);
+            mapSetCapped(this.localInputs, this.tickCount, localInput, maxRollbackFrames);
 
             // Tick the player and get the new state
             let player1StateThisTick = this.player1.tick(
@@ -84,11 +95,11 @@ class GameWorld {
                 this.localInputs.get(this.tickCount - 1));
 
             // Put the new player state at the beginning of the game states
-            this.states.set(this.tickCount, new GameState(player1StateThisTick));
+            mapSetCapped(this.states, this.tickCount, new GameState(player1StateThisTick), maxRollbackFrames);
         }
         else {
             const remoteInputIndex = Math.min(this.remoteTickCount, this.tickCount);
-            const prevRemoteInputIndex = Math.min(remoteInputIndex, 0);
+            const prevRemoteInputIndex = Math.max(remoteInputIndex, 0);
 
             // Tick the player and get the new state
             let player1StateThisTick = this.player1.tick(
@@ -97,24 +108,29 @@ class GameWorld {
                 this.remoteInputs.get(prevRemoteInputIndex));
 
             // Put the new player state at the beginning of the game states
-            this.states.set(this.tickCount, new GameState(player1StateThisTick));
+            mapSetCapped(this.states, this.tickCount, new GameState(player1StateThisTick), maxRollbackFrames);
         }
     }
 
     onRecieveRemoteInput = (remoteInput) => {
         if(remoteInput.frame > this.remoteTickCount)
             this.remoteTickCount = remoteInput.frame;
-        this.remoteInputs.set(remoteInput.frame, remoteInput.input);
+        mapSetCapped(this.remoteInputs, remoteInput.frame, remoteInput.input, maxRollbackFrames);
 
-        for(let i = remoteInput.frame; i <= this.tickCount; i++) {
+        const rollbackPoint = Math.min(remoteInput.frame, this.lastRemoteInputTick + 1);
+        for(let i = rollbackPoint; i <= this.tickCount; i++) {
             let remoteInputIndex = Math.min(i, this.remoteTickCount);
             // Tick the player and get the new state
+
             let player1StateThisTick = this.player1.tick(
                 this.states.get(i - 1).player1State, 
                 this.remoteInputs.get(remoteInputIndex), 
                 this.remoteInputs.get(remoteInputIndex - 1));
             // Put the new player state at the beginning of the game states
             this.states.set(i, new GameState(player1StateThisTick));
+
+            if(remoteInputIndex == i)
+                this.lastRemoteInputTick = i;
         }
     }
 }
