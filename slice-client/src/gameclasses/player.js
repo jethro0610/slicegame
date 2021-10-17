@@ -113,6 +113,41 @@ const tickPlayerState = (prevState, input, prevInput) => {
     return state;
 }
 
+const tickEndRoundPlayerState = (prevState) => {
+    // Store the previous state and copy it into the current state
+    let state = copyPlayerState(prevState);
+
+    // Apply gravity and friction to non-dashing player
+    let onGround = doGroundCollision(state, false);
+    if(!isInDashOrCooldown(state)) {
+        let friction = onGround ? groundFriction : airFriction;
+        state.velX -= state.velX * friction;
+
+        if(!onGround)
+            state.velY += gravity;
+    }
+
+    // Subtract from dash timer and apply velocity
+    if (state.dash > 0)
+        state.dash -= 1;
+        
+    // Apply cooldown slide
+    if (state.dash <= 0 && state.dash !== false && state.cooldown === false) {
+        state.cooldown = cooldownLength;
+        state.velX = state.velX * cooldownSpeed;
+        state.velY = state.velY * cooldownSpeed;
+    }
+
+    // Apply velocities
+    state.x += state.velX;
+    state.y += state.velY;
+
+    // Do wall collisions last, so player stays within bounds
+    doWallCollision(state);
+
+    return state;
+}
+
 const isDashing = (state) => {
     return state.dash > 0;
 }
@@ -177,6 +212,25 @@ const doWallCollision = (state) => {
     }
 }
 
+const getDashCollisions = (state1, state2) => {
+    let collider1 = new Collider(state1.x, state1.y, playerWidth, playerHeight);
+    let collider2 = new Collider(state2.x, state2.y, playerWidth, playerHeight);
+
+    if(collider1.isIntersecting(collider2)) {
+        if(isDashing(state1) && !isDashing(state2)) {
+            return 1;
+        }
+        else if (!isDashing(state1) && isDashing(state2)){
+            return 2;
+        }
+        else if(isDashing(state1) && isDashing(state2)) {
+            return 3;
+        }
+    }
+
+    return 0;
+}
+
 const drawPlayerFromState = (ctx, state, prevState, interp) => {
     // Get the position to draw the player in
     // It interpolates between the position the current and last tick
@@ -188,4 +242,10 @@ const drawPlayerFromState = (ctx, state, prevState, interp) => {
     ctx.fillRect(drawX, drawY, playerWidth, playerHeight);
 }
 
-export { createPlayerState, copyPlayerState, tickPlayerState, drawPlayerFromState };
+export { 
+    createPlayerState, 
+    copyPlayerState, 
+    tickPlayerState, 
+    drawPlayerFromState, 
+    getDashCollisions,
+    tickEndRoundPlayerState };

@@ -23,13 +23,13 @@ class Collider {
 	}
 
 	isIntersecting = (otherRectangle) => {
-		if(this.top() > otherRectangle.bottom())
+		if(this.getTop() > otherRectangle.getBottom())
 			return false;
-		if(this.bottom() < otherRectangle.top())
+		if(this.getBottom() < otherRectangle.getTop())
 			return false;
-		if(this.left() > otherRectangle.right())
+		if(this.getLeft() > otherRectangle.getRight())
 			return false;
-		if(this.right() < otherRectangle.left())
+		if(this.getRight() < otherRectangle.getLeft())
 			return false;
 
 		return true;
