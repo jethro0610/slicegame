@@ -1,4 +1,4 @@
-import Player from "./player";
+import { createPlayerState, drawPlayerFromState, tickPlayerState } from './player'
 import { frameTime } from "./game";
 import { getDefaultInput, getLocalInput } from "./input";
 import Collider from "./collider";
@@ -41,9 +41,7 @@ class GameWorld {
         this.remoteInputs.set(0, getDefaultInput());
 
         // Create player 1 and copy their state to the first game state
-        this.player1 = new Player(0, 0);
-        this.player2 = new Player(200, 0);
-        this.states.set(0, new GameState(this.player1.state, this.player2.state));
+        this.states.set(0, new GameState(createPlayerState(0, 0), createPlayerState(200, 0)));
 
         this.platforms = [];
         this.platforms.push(new Collider(100, 400, 200, 16));
@@ -54,8 +52,13 @@ class GameWorld {
 
     draw = ctx => {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-        this.player1.draw(ctx, this.frameAccumulator / (frameTime + this.tickWaitTime));
-        this.player2.draw(ctx, this.frameAccumulator / (frameTime + this.tickWaitTime));
+
+        if(this.tickCount >= 1) {
+            const drawInterp = this.frameAccumulator / (frameTime + this.tickWaitTime);
+            drawPlayerFromState(ctx, this.states.get(this.tickCount).player1State, this.states.get(this.tickCount - 1).player1State, drawInterp);
+            drawPlayerFromState(ctx, this.states.get(this.tickCount).player2State, this.states.get(this.tickCount - 1).player2State, drawInterp);
+        }
+        
         this.platforms.forEach(platform => {
             // Draw the platform
             ctx.fillStyle = 'black';
@@ -96,12 +99,12 @@ class GameWorld {
     }
 
     gameTick = (stateTickCount, player1Input, prevPlayer1Input, player2Input, prevPlayer2Input) => {
-        let player1StateThisTick = this.player1.tick(
+        let player1StateThisTick = tickPlayerState(
             this.states.get(stateTickCount - 1).player1State, 
             player1Input, 
             prevPlayer1Input);
 
-        let player2StateThisTick = this.player2.tick(
+        let player2StateThisTick = tickPlayerState(
             this.states.get(stateTickCount - 1).player2State, 
             player2Input, 
             prevPlayer2Input);
