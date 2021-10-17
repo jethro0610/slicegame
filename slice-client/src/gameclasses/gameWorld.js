@@ -129,18 +129,23 @@ class GameWorld {
             return;
 
         const rollbackPoint = Math.min(this.rollbackTick, this.lastRemoteInputTick + 1);
+        let lastValidInput = undefined;
+        let missingInput = false;
         for(let i = rollbackPoint; i < this.tickCount; i++) {
-            let remoteInputIndex = Math.min(i, this.remoteTickCount);
+            if(this.remoteInputs.has(i) && !missingInput) {
+                lastValidInput = i;
+                this.lastRemoteInputTick = i;
+            }
+            else
+                missingInput = true;
+
             // Tick the player and get the new state
             let player1StateThisTick = this.player1.tick(
                 this.states.get(i - 1).player1State, 
-                this.remoteInputs.get(remoteInputIndex), 
-                this.remoteInputs.get(remoteInputIndex - 1));
+                this.remoteInputs.get(lastValidInput), 
+                this.remoteInputs.get(missingInput ? lastValidInput : lastValidInput - 1));
             // Put the new player state at the beginning of the game states
             this.states.set(i, new GameState(player1StateThisTick));
-
-            if(remoteInputIndex == i)
-                this.lastRemoteInputTick = i;
         }
 
         this.rollbackTick = Infinity;
