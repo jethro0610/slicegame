@@ -30,6 +30,7 @@ class GameWorld {
         this.remoteTickCount = 0;
         this.tickWaitTime = 0;
 
+        this.rollbackTick = Infinity;
         this.lastRemoteInputTick = 0;
 
         this.localInputs = new Map();
@@ -98,6 +99,7 @@ class GameWorld {
             mapSetCapped(this.states, this.tickCount, new GameState(player1StateThisTick), maxRollbackFrames);
         }
         else {
+            this.executeRollback();
             const remoteInputIndex = Math.min(this.remoteTickCount, this.tickCount);
             const prevRemoteInputIndex = Math.max(remoteInputIndex, 0);
 
@@ -115,13 +117,21 @@ class GameWorld {
     onRecieveRemoteInput = (remoteInput) => {
         if(remoteInput.frame > this.remoteTickCount)
             this.remoteTickCount = remoteInput.frame;
-        mapSetCapped(this.remoteInputs, remoteInput.frame, remoteInput.input, maxRollbackFrames);
 
-        const rollbackPoint = Math.min(remoteInput.frame, this.lastRemoteInputTick + 1);
-        for(let i = rollbackPoint; i <= this.tickCount; i++) {
+        if(remoteInput.frame < this.rollbackTick)
+            this.rollbackTick = remoteInput.frame;
+
+        mapSetCapped(this.remoteInputs, remoteInput.frame, remoteInput.input, maxRollbackFrames);
+    }
+
+    executeRollback = () => {
+        if(this.rollbackTick == Infinity)
+            return;
+
+        const rollbackPoint = Math.min(this.rollbackTick, this.lastRemoteInputTick + 1);
+        for(let i = rollbackPoint; i < this.tickCount; i++) {
             let remoteInputIndex = Math.min(i, this.remoteTickCount);
             // Tick the player and get the new state
-
             let player1StateThisTick = this.player1.tick(
                 this.states.get(i - 1).player1State, 
                 this.remoteInputs.get(remoteInputIndex), 
@@ -132,6 +142,8 @@ class GameWorld {
             if(remoteInputIndex == i)
                 this.lastRemoteInputTick = i;
         }
+
+        this.rollbackTick = Infinity;
     }
 }
 
