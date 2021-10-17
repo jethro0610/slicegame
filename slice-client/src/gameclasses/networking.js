@@ -1,5 +1,5 @@
 import Peer from 'peerjs';
-import { startGame, stopGame, gameWorld } from './game';
+import { startGame, stopGame, gameWorld } from './gameWorld';
 
 let client = new Peer();
 let remote = null;

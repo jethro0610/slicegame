@@ -1,10 +1,24 @@
 import { createPlayerState, drawPlayerFromState, getDashCollisions, tickEndRoundPlayerState, tickPlayerState } from './player'
-import { frameTime } from "./game";
 import { getDefaultInput, getLocalInput } from "./input";
 import Collider from "./collider";
 import { ping } from "./networking";
+import store from '../redux/store/store';
+import { setStarted } from '../redux/reducers/gameStarted';
 
+let gameWorld = null;
+const tickTime = (1/60.0) * 1000;
 const maxRollbackFrames = 300;
+
+const startGame = (remote, isHost) => {
+    gameWorld = new GameWorld(800, 600, remote, isHost);
+    store.dispatch(setStarted(true));
+}
+
+const stopGame = () => {
+    store.dispatch(setStarted(false));
+    gameWorld = null;
+}
+
 const mapSetCapped = (map, key, value, cap) => {
     map.set(key, value);
     if(key >= cap && map.has(key - cap)) {
@@ -65,7 +79,7 @@ class GameWorld {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
         if(this.tickCount >= 1) {
-            const drawInterp = this.frameAccumulator / (frameTime + this.tickWaitTime);
+            const drawInterp = this.frameAccumulator / (tickTime + this.tickWaitTime);
             drawPlayerFromState(ctx, this.states.get(this.tickCount).player1State, this.states.get(this.tickCount - 1).player1State, drawInterp);
             drawPlayerFromState(ctx, this.states.get(this.tickCount).player2State, this.states.get(this.tickCount - 1).player2State, drawInterp);
         }
@@ -85,9 +99,9 @@ class GameWorld {
         this.frameAccumulator += frameInterval;
 
         // If the a whole frame or more has accumulated, tick the world
-        while(this.frameAccumulator >= frameTime + this.tickWaitTime) {
+        while(this.frameAccumulator >= tickTime + this.tickWaitTime) {
             this.tick();
-            this.frameAccumulator -= frameTime + this.tickWaitTime;
+            this.frameAccumulator -= tickTime + this.tickWaitTime;
         }
 
         // Record the time of this tick
@@ -96,8 +110,8 @@ class GameWorld {
 
     // Increases frame time whenever client is ahead of remote (slows game down)
     syncClockWithRemote = () => {
-        if(this.tickCount > (this.remoteTickCount + (ping / 2) / frameTime) + 1)
-            this.tickWaitTime = frameTime;
+        if(this.tickCount > (this.remoteTickCount + (ping / 2) / tickTime) + 1)
+            this.tickWaitTime = tickTime;
         else
             this.tickWaitTime = 0;
     }
@@ -247,4 +261,4 @@ class GameWorld {
     }
 }
 
-export default GameWorld;
+export { startGame, stopGame, gameWorld };

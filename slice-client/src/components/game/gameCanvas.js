@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { gameWorld } from '../../gameclasses/game';
+import { gameWorld } from '../../gameclasses/gameWorld';
 const GameCanvas = props => {
     // Reference to canvas
     const canvasRef = useRef(null);

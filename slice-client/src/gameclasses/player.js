@@ -1,5 +1,5 @@
 import Collider from "./collider";
-import { gameWorld, lerp } from "./game";
+import { gameWorld } from "./gameWorld";
 
 const playerWidth = 32;
 const playerHeight = 64;
@@ -22,6 +22,9 @@ const dashYTransfer = 0.5;
 const cooldownLength = 40;
 const cooldownSpeed = 0.015;
 
+const lerp = (a, b, t) => {
+    return (1 - t) * a + t * b;
+}
 
 const createPlayerState = (x = 0, y = 0, velX = 0, velY = 0, airJumpsUsed = 0, dash = false, cooldown = false, right = true) => {
     return { x, y, velX, velY, airJumpsUsed, dash, cooldown, right};
