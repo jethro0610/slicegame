@@ -35,7 +35,8 @@ const setRemote = (conn) => {
     });
 
     conn.on('data', data => {
-        console.log(data);
+        if (data.frame != undefined)
+            gameWorld.onRecieveRemoteInput(data);
     })
 
     remote = conn;
