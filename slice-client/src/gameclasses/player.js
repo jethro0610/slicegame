@@ -3,15 +3,15 @@ import { gameWorld } from "./gameWorld";
 
 const playerWidth = 32;
 const playerHeight = 64;
-const gravity = 1.5;
+const gravity = 1.75;
 
-const groundFriction = 0.1;
-const airFriction = 0.05;
-const maxSpeed = 10;
+const groundFriction = 0.075;
+const airFriction = 0.025;
+const maxSpeed = 15;
 const groundAcceleration = maxSpeed * groundFriction / (-groundFriction + 1.0);
 const airAcceleration = maxSpeed * airFriction / (-airFriction + 1.0);
 
-const jumpStrength = 25;
+const jumpStrength = 30;
 const maxAirJumps = 2;
 const jumpReversalSpeed = 1.5;
 
@@ -46,7 +46,7 @@ const tickPlayerState = (prevState, input, prevInput) => {
     // Store the previous state and copy it into the current state
     let state = copyPlayerState(prevState);
 
-    let onGround = doGroundCollision(state, input.down);
+    let onGround = doGroundCollision(state, (input.down && !state.dash));
     if(onGround) {
         // Reset the dash
         state.dash = false;

@@ -10,7 +10,7 @@ const tickTime = (1/60.0) * 1000;
 const maxRollbackFrames = 300;
 
 const startGame = (remote, isHost) => {
-    gameWorld = new GameWorld(800, 600, remote, isHost);
+    gameWorld = new GameWorld(1600, 900, remote, isHost);
     store.dispatch(setStarted(true));
 }
 
@@ -69,8 +69,11 @@ class GameWorld {
         this.states.set(0, createGameState(createPlayerState(0, 0), createPlayerState(200, 0)));
 
         this.platforms = [];
-        this.platforms.push(new Collider(100, 400, 200, 16));
+        this.platforms.push(new Collider(100, (height / 2), 400, 16));
+        this.platforms.push(new Collider(width - 500, (height / 2), 400, 16));
 
+        this.platforms.push(new Collider((width / 2) - 150, (height /4), 300, 16));
+        this.platforms.push(new Collider((width / 2) - 250, (height / 2) + (height /4), 500, 16));
         this.lastTickTime = performance.now();
         this.frameAccumulator = 0;
     }
