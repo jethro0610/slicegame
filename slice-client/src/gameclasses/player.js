@@ -210,9 +210,6 @@ const doWallCollision = (state) => {
         state.x = 0;
         state.velX = 0;
     }
-    if(collider.getTop() <= 0){
-        state.y = 0;
-    }
 }
 
 const getDashCollisions = (state1, state2) => {
