@@ -22,8 +22,7 @@ const dashYTransfer = 0.5;
 const cooldownLength = 40;
 const cooldownSpeed = 0.015;
 
-const knockbackX = 50;
-const knockbackY = -25;
+const knockback = 0.01;
 
 const lerp = (a, b, t) => {
     return (1 - t) * a + t * b;
@@ -122,16 +121,6 @@ const tickPlayerState = (prevState, input, prevInput) => {
 const tickEndRoundPlayerState = (prevState) => {
     // Store the previous state and copy it into the current state
     let state = copyPlayerState(prevState);
-
-    // Apply gravity and friction to non-dashing player
-    let onGround = doGroundCollision(state, false);
-    if(!isInDashOrCooldown(state)) {
-        let friction = onGround ? groundFriction : airFriction;
-        state.velX -= state.velX * friction;
-
-        if(!onGround)
-            state.velY += gravity;
-    }
 
     // Subtract from dash timer and apply velocity
     if (state.dash > 0)
@@ -237,9 +226,8 @@ const doDashCollisions = (state1, state2) => {
             targetState = state1;
         }
 
-        
-        targetState.velX = dasherState.right ? knockbackX : -knockbackX;
-        targetState.velY = knockbackY;
+        targetState.velX = dasherState.velX * knockback;
+        targetState.velY = dasherState.velY * knockback;
         return true;
     }
 
