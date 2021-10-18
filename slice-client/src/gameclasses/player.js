@@ -50,7 +50,7 @@ const tickPlayerState = (prevState, state, prevInput, input) => {
     let onGround = doGroundCollision(state, (input.down && !state.dash));
     if(onGround) {
         // Reset the dash if landing
-        if(prevState.velY > 0) {
+        if(prevState.velY > 0 || isInCooldownFall(state)) {
             state.dash = false;
             state.cooldown = false;
         }
@@ -78,8 +78,10 @@ const tickPlayerState = (prevState, state, prevInput, input) => {
     }
 
     // Apply gravity
-    if((!onGround && !isInDashOrCooldown(state)) || isInCooldownFall(state)) // Only apply when not dashing or in cooldown fall
-        state.velY += gravity;
+    if(!onGround)  {// Only apply when not dashing or in cooldown fall 
+        if(!isInDashOrCooldown(state) || isInCooldownFall(state))
+            state.velY += gravity;
+    }
 
     // Jumping
     if (input.up && !prevInput.up && !isInDashOrCooldown(state)) {
