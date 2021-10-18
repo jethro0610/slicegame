@@ -15,7 +15,8 @@ const jumpStrength = 30;
 const maxAirJumps = 2;
 const jumpReversalSpeed = 1.5;
 
-const dashLength = 8;
+const groundDashLength = 5;
+const airDashLength = 8;
 const dashSpeed = 50;
 const dashYTransfer = 0.5;
 
@@ -93,9 +94,9 @@ const tickPlayerState = (prevState, state, prevInput, input) => {
 
     // Dashing
     if(input.dash && !prevInput.dash && !isInDashOrCooldown(state)) {
+        state.dash = onGround ? groundDashLength : airDashLength;
         state.velX = state.right ? dashSpeed : -dashSpeed;
         state.velY = state.velY * dashYTransfer;
-        state.dash = dashLength;
     }
     // Subtract from dash timer and apply velocity
     if (state.dash > 0)

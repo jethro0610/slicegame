@@ -81,17 +81,17 @@ class GameWorld {
     draw = ctx => {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-        if(this.tickCount >= 1) {
-            const drawInterp = this.frameAccumulator / (tickTime + this.tickWaitTime);
-            drawPlayerFromState(ctx, this.states.get(this.tickCount).player1State, this.states.get(this.tickCount - 1).player1State, drawInterp);
-            drawPlayerFromState(ctx, this.states.get(this.tickCount).player2State, this.states.get(this.tickCount - 1).player2State, drawInterp);
-        }
-
         this.platforms.forEach(platform => {
             // Draw the platform
             ctx.fillStyle = 'black';
             ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
         });
+
+        if(this.tickCount >= 1) {
+            const drawInterp = this.frameAccumulator / (tickTime + this.tickWaitTime);
+            drawPlayerFromState(ctx, this.states.get(this.tickCount).player1State, this.states.get(this.tickCount - 1).player1State, drawInterp);
+            drawPlayerFromState(ctx, this.states.get(this.tickCount).player2State, this.states.get(this.tickCount - 1).player2State, drawInterp);
+        }
     }
 
     doTicks = () => {
