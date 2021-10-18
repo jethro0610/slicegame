@@ -1,4 +1,4 @@
-import { createPlayerState, doDashCollisions, drawPlayerFromState, tickEndRoundPlayerState, tickPlayerState } from './player'
+import { copyPlayerState, createPlayerState, doDashCollisions, drawPlayerFromState, tickEndRoundPlayerState, tickPlayerState } from './player'
 import { getDefaultInput, getLocalInput } from "./input";
 import Collider from "./collider";
 import { ping } from "./networking";
@@ -127,45 +127,50 @@ class GameWorld {
     }
 
     tickGameState = (stateTickCount, player1Input, prevPlayer1Input, player2Input, prevPlayer2Input) => {
-        // Copy the previous state
+        // Create new states
         let state = copyGameState(this.states.get(stateTickCount - 1));
+        let prevPlayer1State = state.player1State;
+        let player1State = copyPlayerState(state.player1State); 
+        let prevPlayer2State = state.player2State;
+        let player2State = copyPlayerState(state.player2State);
 
-        let player1StateThisTick, player2StateThisTick
         if(state.roundState == 0) {
             // Tick the player states
-            player1StateThisTick = tickPlayerState(
-                state.player1State, 
-                player1Input, 
-                prevPlayer1Input);
+            tickPlayerState(
+                prevPlayer1State, 
+                player1State,
+                prevPlayer1Input, 
+                player1Input);
 
-            player2StateThisTick = tickPlayerState(
-                state.player2State, 
-                player2Input, 
-                prevPlayer2Input);
+                tickPlayerState(
+                    prevPlayer2State, 
+                    player2State,
+                    prevPlayer2Input, 
+                    player2Input);
         }
         else if(state.roundState == 1) {
             // Tick the end round player states
-            player1StateThisTick = tickEndRoundPlayerState(state.player1State)
-            player2StateThisTick = tickEndRoundPlayerState(state.player2State)
+            tickEndRoundPlayerState(prevPlayer1State, player1State);
+            tickEndRoundPlayerState(prevPlayer2State, player2State);
 
             state.endRoundTimer += 1;
             if (state.endRoundTimer == 150) {
                 state.roundState = 0;
-                player1StateThisTick = createPlayerState(0, 0);
-                player2StateThisTick = createPlayerState(200, 0);
+                player1State = createPlayerState(0, 0);
+                player2State = createPlayerState(200, 0);
                 state.endRoundTimer = 0;
             }
         }
 
         // Get any dash collisions
-        const dashCollisionResult = doDashCollisions(player1StateThisTick, player2StateThisTick);
+        const dashCollisionResult = doDashCollisions(player1State, player2State);
         if(dashCollisionResult === true && state.roundState == 0) {
             state.roundState = 1;
         }
 
         // Update the player states
-        state.player1State = player1StateThisTick;
-        state.player2State = player2StateThisTick;
+        state.player1State = player1State;
+        state.player2State = player2State;
 
         // Add the game state to the map
         mapSetCapped(this.states, stateTickCount, state, maxRollbackFrames);

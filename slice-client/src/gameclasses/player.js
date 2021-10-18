@@ -44,18 +44,20 @@ const copyPlayerState = (state) =>{
         right: state.right};
 }
 
-const tickPlayerState = (prevState, input, prevInput) => {
+const tickPlayerState = (prevState, state, prevInput, input) => {
     // Store the previous state and copy it into the current state
-    let state = copyPlayerState(prevState);
-
     let onGround = doGroundCollision(state, (input.down && !state.dash));
     if(onGround) {
-        // Reset the dash
-        state.dash = false;
-        state.cooldown = false;
+        // Reset the dash if landing
+        if(prevState.velY > 0) {
+            state.dash = false;
+            state.cooldown = false;
+        }
 
         state.airJumpsUsed = 0; // Reset air jumps
-        calculateReversal(state, input); // Dash dance
+
+        if(!isInDashOrCooldown(state))
+            calculateReversal(state, input); // Dash dance
     }
 
     // Ground Movement
@@ -90,7 +92,7 @@ const tickPlayerState = (prevState, input, prevInput) => {
     }
 
     // Dashing
-    if(input.dash && !prevInput.dash && !onGround && !isInDashOrCooldown(state)) {
+    if(input.dash && !prevInput.dash && !isInDashOrCooldown(state)) {
         state.velX = state.right ? dashSpeed : -dashSpeed;
         state.velY = state.velY * dashYTransfer;
         state.dash = dashLength;
@@ -114,14 +116,9 @@ const tickPlayerState = (prevState, input, prevInput) => {
 
     // Do wall collisions last, so player stays within bounds
     doWallCollision(state);
-
-    return state;
 }
 
-const tickEndRoundPlayerState = (prevState) => {
-    // Store the previous state and copy it into the current state
-    let state = copyPlayerState(prevState);
-
+const tickEndRoundPlayerState = (prevState, state) => {
     // Subtract from dash timer and apply velocity
     if (state.dash > 0)
         state.dash -= 1;
@@ -139,8 +136,6 @@ const tickEndRoundPlayerState = (prevState) => {
 
     // Do wall collisions last, so player stays within bounds
     doWallCollision(state);
-
-    return state;
 }
 
 const isDashing = (state) => {
