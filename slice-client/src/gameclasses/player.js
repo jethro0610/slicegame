@@ -45,6 +45,13 @@ const copyPlayerState = (state) =>{
         right: state.right};
 }
 
+const tickStartRoundPlayerState = (prevState, state) => {
+    // Apply gravity and return whether or not the player is on the ground
+    state.velY += gravity;
+    state.y += state.velY;
+    return doGroundCollision(state, false);
+}
+
 const tickPlayerState = (prevState, state, prevInput, input) => {
     // Store the previous state and copy it into the current state
     let onGround = doGroundCollision(state, (input.down && !state.dash));
@@ -244,8 +251,11 @@ const drawPlayerFromState = (ctx, state, prevState, interp) => {
 }
 
 export { 
+    playerWidth,
+    playerHeight,
     createPlayerState, 
     copyPlayerState, 
+    tickStartRoundPlayerState,
     tickPlayerState, 
     drawPlayerFromState, 
     doDashCollisions,

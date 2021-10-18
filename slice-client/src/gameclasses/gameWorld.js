@@ -1,4 +1,4 @@
-import { copyPlayerState, createPlayerState, doDashCollisions, drawPlayerFromState, tickEndRoundPlayerState, tickPlayerState } from './player'
+import { copyPlayerState, createPlayerState, doDashCollisions, drawPlayerFromState, playerWidth, tickEndRoundPlayerState, tickPlayerState, tickStartRoundPlayerState } from './player'
 import { getDefaultInput, getLocalInput } from "./input";
 import Collider from "./collider";
 import { ping } from "./networking";
@@ -9,8 +9,16 @@ let gameWorld = null;
 const tickTime = (1/60.0) * 1000;
 const maxRollbackFrames = 300;
 
+const gameWidth = 1600;
+const gameHeight = 900;
+const player1SpawnX = 250;
+const player2SpawnX = gameWidth - player1SpawnX - playerWidth;
+
+const startGameLength = 180;
+const startMessageLength = 60;
+
 const startGame = (remote, isHost) => {
-    gameWorld = new GameWorld(1600, 900, remote, isHost);
+    gameWorld = new GameWorld(gameWidth, gameHeight, remote, isHost);
     store.dispatch(setStarted(true));
 }
 
@@ -26,12 +34,13 @@ const mapSetCapped = (map, key, value, cap) => {
     }
 }
 
-const createGameState = (player1State, player2State, roundState = 0, endRoundTimer = 0) => {
+const createGameState = (player1State, player2State, roundState = 0, roundTimer = 0, messageTimer = 0) => {
     return { 
         player1State, 
         player2State, 
         roundState,
-        endRoundTimer
+        roundTimer,
+        messageTimer
     };
 }
 
@@ -40,7 +49,9 @@ const copyGameState = (gameState) => {
         player1State: gameState.player1State, 
         player2State: gameState.player2State, 
         roundState: gameState.roundState,
-        endRoundTimer: gameState.endRoundTimer
+        startGameTimer: gameState.startGameTimer,
+        roundTimer: gameState.roundTimer,
+        messageTimer: gameState.messageTimer
     };
 }
 
@@ -66,7 +77,7 @@ class GameWorld {
         this.remoteInputs.set(0, getDefaultInput());
 
         // Create player 1 and copy their state to the first game state
-        this.states.set(0, createGameState(createPlayerState(0, 0), createPlayerState(200, 0)));
+        this.states.set(0, createGameState(createPlayerState(player1SpawnX, -100), createPlayerState(player2SpawnX, -100)));
 
         this.platforms = [];
         this.platforms.push(new Collider(100, (height / 2), 400, 16));
@@ -78,8 +89,24 @@ class GameWorld {
         this.frameAccumulator = 0;
     }
 
+    drawStartRoundUI = ctx => {
+        ctx.font = '250px Arial';
+        ctx.textAlign ='center';
+        ctx.fillStyle = 'black';
+        ctx.fillText('Ready...', this.width / 2, (this.height / 2) + 50);
+    }
+
+    drawStartMessage = ctx => {
+        ctx.font = '250px Arial';
+        ctx.textAlign ='center';
+        ctx.fillStyle = 'black';
+        ctx.fillText('Slice!', this.width / 2, (this.height / 2) + 50);
+    }
+
     draw = ctx => {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        const currentState = this.states.get(this.tickCount);
+        const previousState = this.states.get(this.tickCount - 1);
 
         this.platforms.forEach(platform => {
             // Draw the platform
@@ -89,9 +116,14 @@ class GameWorld {
 
         if(this.tickCount >= 1) {
             const drawInterp = this.frameAccumulator / (tickTime + this.tickWaitTime);
-            drawPlayerFromState(ctx, this.states.get(this.tickCount).player1State, this.states.get(this.tickCount - 1).player1State, drawInterp);
-            drawPlayerFromState(ctx, this.states.get(this.tickCount).player2State, this.states.get(this.tickCount - 1).player2State, drawInterp);
+            drawPlayerFromState(ctx, currentState.player1State, previousState.player1State, drawInterp);
+            drawPlayerFromState(ctx, currentState.player2State, previousState.player2State, drawInterp);
         }
+
+        if (currentState.roundState == 0)
+            this.drawStartRoundUI(ctx);
+        else if (currentState.messageTimer > 0) 
+            this.drawStartMessage(ctx);
     }
 
     doTicks = () => {
@@ -134,7 +166,27 @@ class GameWorld {
         let prevPlayer2State = state.player2State;
         let player2State = copyPlayerState(state.player2State);
 
+        if(state.messageTimer > 0)
+            state.messageTimer--;
+
         if(state.roundState == 0) {
+            state.roundTimer++;
+            if(state.roundTimer >= startGameLength) {
+                state.roundState =1;
+                state.roundTimer = 0;
+                state.messageTimer = startMessageLength;
+            }
+            tickStartRoundPlayerState(prevPlayer1State, player1State);
+            tickStartRoundPlayerState(prevPlayer2State, player2State);
+        }
+        else if (state.roundState == 1) {
+            let player1OnGround = tickStartRoundPlayerState(prevPlayer1State, player1State);
+            let player2OnGround = tickStartRoundPlayerState(prevPlayer2State, player2State);
+
+            if(player1OnGround && player2OnGround)
+                state.roundState = 2;
+        }
+        else if(state.roundState == 2) {
             // Tick the player states
             tickPlayerState(
                 prevPlayer1State, 
@@ -147,25 +199,24 @@ class GameWorld {
                     player2State,
                     prevPlayer2Input, 
                     player2Input);
+
+            // Get any dash collisions
+            const hasDashCollision = doDashCollisions(player1State, player2State);
+            if(hasDashCollision)
+                state.roundState = 3;
         }
-        else if(state.roundState == 1) {
+        else if(state.roundState == 3) {
             // Tick the end round player states
             tickEndRoundPlayerState(prevPlayer1State, player1State);
             tickEndRoundPlayerState(prevPlayer2State, player2State);
 
-            state.endRoundTimer += 1;
-            if (state.endRoundTimer == 150) {
-                state.roundState = 0;
-                player1State = createPlayerState(0, 0);
-                player2State = createPlayerState(200, 0);
-                state.endRoundTimer = 0;
+            state.roundTimer += 1;
+            if (state.roundTimer == 150) {
+                state.roundState = 1;
+                player1State = createPlayerState(player1SpawnX, -100);
+                player2State = createPlayerState(player2SpawnX, -100);
+                state.roundTimer = 0;
             }
-        }
-
-        // Get any dash collisions
-        const dashCollisionResult = doDashCollisions(player1State, player2State);
-        if(dashCollisionResult === true && state.roundState == 0) {
-            state.roundState = 1;
         }
 
         // Update the player states
