@@ -22,6 +22,9 @@ const dashYTransfer = 0.5;
 const cooldownLength = 40;
 const cooldownSpeed = 0.015;
 
+const knockbackX = 50;
+const knockbackY = -25;
+
 const lerp = (a, b, t) => {
     return (1 - t) * a + t * b;
 }
@@ -212,23 +215,35 @@ const doWallCollision = (state) => {
     }
 }
 
-const getDashCollisions = (state1, state2) => {
+const doDashCollisions = (state1, state2) => {
     let collider1 = new Collider(state1.x, state1.y, playerWidth, playerHeight);
     let collider2 = new Collider(state2.x, state2.y, playerWidth, playerHeight);
 
     if(collider1.isIntersecting(collider2)) {
-        if(isDashing(state1) && !isDashing(state2)) {
-            return 1;
+        if(isDashing(state1) && isDashing(state2))
+            return false;
+
+        if(!isDashing(state1) && !isDashing(state2))
+            return false;
+
+        let dasherState = null;
+        let targetState = null;
+        if(isDashing(state1)) {
+            dasherState = state1;
+            targetState = state2;
         }
-        else if (!isDashing(state1) && isDashing(state2)){
-            return 2;
+        else if (isDashing(state2)) {
+            dasherState = state2;
+            targetState = state1;
         }
-        else if(isDashing(state1) && isDashing(state2)) {
-            return 3;
-        }
+
+        
+        targetState.velX = dasherState.right ? knockbackX : -knockbackX;
+        targetState.velY = knockbackY;
+        return true;
     }
 
-    return 0;
+    return false;
 }
 
 const drawPlayerFromState = (ctx, state, prevState, interp) => {
@@ -247,5 +262,5 @@ export {
     copyPlayerState, 
     tickPlayerState, 
     drawPlayerFromState, 
-    getDashCollisions,
+    doDashCollisions,
     tickEndRoundPlayerState };

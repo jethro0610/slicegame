@@ -1,4 +1,4 @@
-import { createPlayerState, drawPlayerFromState, getDashCollisions, tickEndRoundPlayerState, tickPlayerState } from './player'
+import { createPlayerState, doDashCollisions, drawPlayerFromState, tickEndRoundPlayerState, tickPlayerState } from './player'
 import { getDefaultInput, getLocalInput } from "./input";
 import Collider from "./collider";
 import { ping } from "./networking";
@@ -158,11 +158,9 @@ class GameWorld {
         }
 
         // Get any dash collisions
-        const dashCollisionResult = getDashCollisions(player1StateThisTick, player2StateThisTick);
-        if(dashCollisionResult != 0 && state.roundState == 0) {
+        const dashCollisionResult = doDashCollisions(player1StateThisTick, player2StateThisTick);
+        if(dashCollisionResult === true && state.roundState == 0) {
             state.roundState = 1;
-            player2StateThisTick.velX = 40;
-            player2StateThisTick.velY = -20;
         }
 
         // Update the player states
