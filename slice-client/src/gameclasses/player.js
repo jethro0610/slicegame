@@ -1,5 +1,11 @@
 import Collider from "./collider";
 import { gameWorld } from "./gameWorld";
+import VSprite from './vsprite'
+
+// Create the player VSprite and add animations
+const playerVSpriteJson = require('../vsprites/player.json')
+const playerVSprite = new VSprite(playerVSpriteJson)
+playerVSprite.add_animation(1, 8, 'run')
 
 const playerWidth = 32;
 const playerHeight = 64;
@@ -242,8 +248,7 @@ const drawPlayerFromState = (ctx, state, prevState, interp) => {
     let drawY = lerp(prevState.y, state.y, interp);
 
     // Draw the player
-    ctx.fillStyle = 'green';
-    ctx.fillRect(drawX, drawY, playerWidth, playerHeight);
+    playerVSprite.draw(ctx, drawX, drawY + playerHeight, 200, 'run')
 }
 
 export { 
