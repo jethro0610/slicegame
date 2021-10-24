@@ -34,24 +34,30 @@ const mapSetCapped = (map, key, value, cap) => {
     }
 }
 
-const createGameState = (player1State, player2State, roundState = 0, roundTimer = 0, messageTimer = 0) => {
+const createGameState = (player1State, player2State, roundState = 0, roundTimer = 0, messageTimer = 0, roundWinner = 0, player1Score = 0, player2Score = 0) => {
     return { 
         player1State, 
         player2State, 
         roundState,
         roundTimer,
-        messageTimer
+        messageTimer,
+        roundWinner,
+        player1Score,
+        player2Score
     };
 }
 
-const copyGameState = (gameState) => {
+const copyGameState = (state) => {
     return { 
-        player1State: gameState.player1State, 
-        player2State: gameState.player2State, 
-        roundState: gameState.roundState,
-        startGameTimer: gameState.startGameTimer,
-        roundTimer: gameState.roundTimer,
-        messageTimer: gameState.messageTimer
+        player1State: state.player1State, 
+        player2State: state.player2State, 
+        roundState: state.roundState,
+        startGameTimer: state.startGameTimer,
+        roundTimer: state.roundTimer,
+        messageTimer: state.messageTimer,
+        roundWinner: state.roundWinner,
+        player1Score: state.player1Score,
+        player2Score: state.player2Score
     };
 }
 
@@ -89,24 +95,24 @@ class GameWorld {
         this.frameAccumulator = 0;
     }
 
-    drawStartRoundUI = ctx => {
-        ctx.font = '250px Arial';
+    drawText = (ctx, text) => {
+        ctx.font = '125px Arial';
         ctx.textAlign ='center';
         ctx.fillStyle = 'black';
-        ctx.fillText('Ready...', this.width / 2, (this.height / 2) + 50);
+        ctx.fillText(text, this.width / 2, (this.height / 2) + 50);
     }
 
-    drawStartMessage = ctx => {
-        ctx.font = '250px Arial';
+    drawTopText = (ctx, text) => {
+        ctx.font = '75px Arial';
         ctx.textAlign ='center';
         ctx.fillStyle = 'black';
-        ctx.fillText('Slice!', this.width / 2, (this.height / 2) + 50);
+        ctx.fillText(text, this.width / 2, 80);
     }
 
     draw = ctx => {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-        const currentState = this.states.get(this.tickCount);
-        const previousState = this.states.get(this.tickCount - 1);
+        const state = this.states.get(this.tickCount);
+        const prevState = this.states.get(this.tickCount - 1);
 
         this.platforms.forEach(platform => {
             // Draw the platform
@@ -116,14 +122,19 @@ class GameWorld {
 
         if(this.tickCount >= 1) {
             const drawInterp = this.frameAccumulator / (tickTime + this.tickWaitTime);
-            drawPlayerFromState(ctx, currentState.player1State, previousState.player1State, drawInterp);
-            drawPlayerFromState(ctx, currentState.player2State, previousState.player2State, drawInterp);
+            drawPlayerFromState(ctx, state.player1State, prevState.player1State, drawInterp);
+            drawPlayerFromState(ctx, state.player2State, prevState.player2State, drawInterp);
         }
 
-        if (currentState.roundState == 0)
-            this.drawStartRoundUI(ctx);
-        else if (currentState.messageTimer > 0) 
-            this.drawStartMessage(ctx);
+        if (state.roundState == 0)
+            this.drawText(ctx, 'Ready...');
+        else if(state.roundState == 3)
+            this.drawText(ctx, state.player1Score + ' - ' + state.player2Score);
+        else
+            this.drawTopText(ctx, state.player1Score + ' - ' + state.player2Score);
+
+        if (state.messageTimer > 0) 
+            this.drawText(ctx, 'Slice!');
     }
 
     doTicks = () => {
@@ -171,7 +182,7 @@ class GameWorld {
 
         if(state.roundState == 0) {
             state.roundTimer++;
-            if(state.roundTimer >= startGameLength) {
+            if(state.roundTimer == startGameLength) {
                 state.roundState =1;
                 state.roundTimer = 0;
                 state.messageTimer = startMessageLength;
@@ -194,16 +205,18 @@ class GameWorld {
                 prevPlayer1Input, 
                 player1Input);
 
-                tickPlayerState(
-                    prevPlayer2State, 
-                    player2State,
-                    prevPlayer2Input, 
-                    player2Input);
+            tickPlayerState(
+                prevPlayer2State, 
+                player2State,
+                prevPlayer2Input, 
+                player2Input);
 
             // Get any dash collisions
-            const hasDashCollision = doDashCollisions(player1State, player2State);
-            if(hasDashCollision)
+            const dashCollisionResult = doDashCollisions(player1State, player2State);
+            if(dashCollisionResult != 0) {
                 state.roundState = 3;
+                state.roundWinner = dashCollisionResult;
+            }
         }
         else if(state.roundState == 3) {
             // Tick the end round player states
@@ -211,6 +224,13 @@ class GameWorld {
             tickEndRoundPlayerState(prevPlayer2State, player2State);
 
             state.roundTimer += 1;
+
+            if(state.roundTimer == 60) {
+                if (state.roundWinner == 1)
+                    state.player1Score++;
+                else if (state.roundWinner == 2)
+                    state.player2Score++;
+            }
             if (state.roundTimer == 150) {
                 state.roundState = 1;
                 player1State = createPlayerState(player1SpawnX, -100);

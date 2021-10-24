@@ -215,28 +215,24 @@ const doDashCollisions = (state1, state2) => {
 
     if(collider1.isIntersecting(collider2)) {
         if(isDashing(state1) && isDashing(state2))
-            return false;
+            return 0;
 
         if(!isDashing(state1) && !isDashing(state2))
-            return false;
+            return 0;
 
-        let dasherState = null;
-        let targetState = null;
         if(isDashing(state1)) {
-            dasherState = state1;
-            targetState = state2;
+            state2.velX = state1.velX * knockback;
+            state2.velY = state1.velY * knockback;
+            return 1;
         }
         else if (isDashing(state2)) {
-            dasherState = state2;
-            targetState = state1;
+            state1.velX = state2.velX * knockback;
+            state1.velY = state2.velY * knockback;
+            return 2;
         }
-
-        targetState.velX = dasherState.velX * knockback;
-        targetState.velY = dasherState.velY * knockback;
-        return true;
     }
 
-    return false;
+    return 0;
 }
 
 const drawPlayerFromState = (ctx, state, prevState, interp) => {
