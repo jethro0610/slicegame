@@ -248,7 +248,10 @@ const drawPlayerFromState = (ctx, state, prevState, interp) => {
     let drawY = lerp(prevState.y, state.y, interp);
 
     // Draw the player
-    playerVSprite.draw(ctx, drawX, drawY + playerHeight, 200, 'run')
+    if (state.velX > 0.1 || state.velX < -0.1)
+        playerVSprite.draw(ctx, drawX, drawY + playerHeight + 2, 200, !state.right, 'run')
+    else
+        playerVSprite.draw(ctx, drawX, drawY + playerHeight + 2, 200, !state.right)
 }
 
 export { 

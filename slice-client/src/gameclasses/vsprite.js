@@ -21,15 +21,16 @@ class VSprite {
         this.animations.set(name, new VSpriteAnimation(startIndex, endIndex))
     }
 
-    draw = (ctx, x, y, scale, animationName = -1) => {
+    draw = (ctx, x, y, scale, flipped = false, animationName = '') => {
         if (this.sprites.length <= 0)
             return;
 
         ctx.fillStyle = 'black';
         
-        
+        const flipMultiplier = flipped ? -1 : 1
+
         let spriteIndex;
-        if (this.animations.length == 0 || animationName == -1)
+        if (this.animations.length == 0 || animationName == '')
             spriteIndex = 0;
         else {
             let animation = this.animations.get(animationName)
@@ -37,9 +38,9 @@ class VSprite {
         }
         this.sprites[spriteIndex].shapes.forEach(shape => {
             ctx.beginPath();
-            ctx.moveTo(x + shape.verticies[0].x * scale, y - shape.verticies[0].y * scale)
+            ctx.moveTo(x + shape.verticies[0].x * scale * flipMultiplier, y - shape.verticies[0].y * scale)
             for (let i = 1; i < shape.verticies.length; i++) {
-                ctx.lineTo(x + shape.verticies[i].x * scale, y - shape.verticies[i].y * scale);
+                ctx.lineTo(x + shape.verticies[i].x * scale * flipMultiplier, y - shape.verticies[i].y * scale);
             }
             ctx.closePath();
             ctx.fill(); 
