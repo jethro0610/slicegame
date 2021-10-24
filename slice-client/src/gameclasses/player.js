@@ -35,8 +35,8 @@ const lerp = (a, b, t) => {
     return (1 - t) * a + t * b;
 }
 
-const createPlayerState = (x = 0, y = 0, velX = 0, velY = 0, airJumpsUsed = 0, dash = false, cooldown = false, right = true) => {
-    return { x, y, velX, velY, airJumpsUsed, dash, cooldown, right};
+const createPlayerState = (x = 0, y = 0, velX = 0, velY = 0, airJumpsUsed = 0, dash = false, cooldown = false, right = true, animation='') => {
+    return { x, y, velX, velY, airJumpsUsed, dash, cooldown, right, animation};
 }
 
 const copyPlayerState = (state) =>{
@@ -48,7 +48,8 @@ const copyPlayerState = (state) =>{
         airJumpsUsed: state.airJumpsUsed, 
         dash: state.dash, 
         cooldown: state.cooldown, 
-        right: state.right};
+        right: state.right,
+        animation:state.animation};
 }
 
 const tickStartRoundPlayerState = (prevState, state) => {
@@ -59,6 +60,8 @@ const tickStartRoundPlayerState = (prevState, state) => {
 }
 
 const tickPlayerState = (prevState, state, prevInput, input) => {
+    state.animation = ''
+
     // Store the previous state and copy it into the current state
     let onGround = doGroundCollision(state, (input.down && !state.dash));
     if(onGround) {
@@ -80,10 +83,12 @@ const tickPlayerState = (prevState, state, prevInput, input) => {
         let acceleration = onGround ? groundAcceleration : airAcceleration;
         let friction = onGround ? groundFriction : airFriction;
         if (input.left && !input.right) {
+            state.animation = 'run'
             state.velX -= acceleration;
             state.right = false;
         }
         else if(input.right && !input.left) {
+            state.animation = 'run'
             state.velX += acceleration;
             state.right = true;
         }
@@ -248,10 +253,7 @@ const drawPlayerFromState = (ctx, state, prevState, interp) => {
     let drawY = lerp(prevState.y, state.y, interp);
 
     // Draw the player
-    if (state.velX > 0.1 || state.velX < -0.1)
-        playerVSprite.draw(ctx, drawX, drawY + playerHeight + 2, 200, !state.right, 'run')
-    else
-        playerVSprite.draw(ctx, drawX, drawY + playerHeight + 2, 200, !state.right)
+    playerVSprite.draw(ctx, drawX + playerWidth / 2, drawY + playerHeight + 2, 200, !state.right, state.animation)
 }
 
 export { 
