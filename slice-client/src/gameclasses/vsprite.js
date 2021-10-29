@@ -23,7 +23,7 @@ class VSprite {
         this.last_time = performance.now()
     }
 
-    draw = (ctx, x, y, scale, flipped = false, animationName) => {
+    draw = (ctx, x, y, scale, flipped = false, animationName, frameOverride = -1) => {
         if (this.animations.length == 0)
             return
         
@@ -41,7 +41,7 @@ class VSprite {
             this.incrementer = 0
         }
 
-        const sprite_index = this.frame % animation.sprites.length
+        const sprite_index = frameOverride == -1 ? this.frame % animation.sprites.length : frameOverride
 
         ctx.fillStyle = 'black';
         const flipMultiplier = flipped ? -1 : 1

@@ -34,8 +34,8 @@ const lerp = (a, b, t) => {
     return (1 - t) * a + t * b;
 }
 
-const createPlayerState = (x = 0, y = 0, velX = 0, velY = 0, airJumpsUsed = 0, dash = false, cooldown = false, right = true, animation='idle') => {
-    return { x, y, velX, velY, airJumpsUsed, dash, cooldown, right, animation};
+const createPlayerState = (x = 0, y = 0, velX = 0, velY = 0, airJumpsUsed = 0, dash = false, cooldown = false, right = true, animation='idle', animationFrame=-1) => {
+    return { x, y, velX, velY, airJumpsUsed, dash, cooldown, right, animation, animationFrame};
 }
 
 const copyPlayerState = (state) =>{
@@ -48,7 +48,8 @@ const copyPlayerState = (state) =>{
         dash: state.dash, 
         cooldown: state.cooldown, 
         right: state.right,
-        animation:state.animation};
+        animation:state.animation,
+        animationFrame:state.animationFrame};
 }
 
 const tickStartRoundPlayerState = (prevState, state) => {
@@ -60,6 +61,8 @@ const tickStartRoundPlayerState = (prevState, state) => {
 
 const tickPlayerState = (prevState, state, prevInput, input) => {
     state.animation = 'idle'
+    state.animationFrame = -1
+
     if (state.velX < -1 || state.velX > 1)
         state.animation = 'skid'
 
@@ -105,11 +108,13 @@ const tickPlayerState = (prevState, state, prevInput, input) => {
         if (state.velY > 0)
             state.animation = 'fall'
         else {
-            const jumpFrame = parseInt((10 - parseInt((-state.velY / jumpStrength) * 10)));
-            if (jumpFrame > 9 || jumpFrame < 0 || state.airJumpsUsed < 1)
-                state.animation = 'jump'
+            if (state.airJumpsUsed >= 1) {
+                const jumpFrame = parseInt((10 - parseInt((-state.velY / jumpStrength) * 10)));
+                state.animation = 'airJump'
+                state.animationFrame = jumpFrame
+            }
             else
-                state.animation = 'jump' + jumpFrame.toString();
+                state.animation = 'jump';
         }
     }
 
