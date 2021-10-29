@@ -3,9 +3,8 @@ import { gameWorld } from "./gameWorld";
 import VSprite from './vsprite'
 
 // Create the player VSprite and add animations
-const playerVSpriteJson = require('../vsprites/player.json')
+const playerVSpriteJson = require('../vsprites/char_jump3.json')
 const playerVSprite = new VSprite(playerVSpriteJson)
-playerVSprite.add_animation(1, 8, 'run')
 
 const playerWidth = 32;
 const playerHeight = 64;
@@ -35,7 +34,7 @@ const lerp = (a, b, t) => {
     return (1 - t) * a + t * b;
 }
 
-const createPlayerState = (x = 0, y = 0, velX = 0, velY = 0, airJumpsUsed = 0, dash = false, cooldown = false, right = true, animation='') => {
+const createPlayerState = (x = 0, y = 0, velX = 0, velY = 0, airJumpsUsed = 0, dash = false, cooldown = false, right = true, animation='idle') => {
     return { x, y, velX, velY, airJumpsUsed, dash, cooldown, right, animation};
 }
 
@@ -60,7 +59,7 @@ const tickStartRoundPlayerState = (prevState, state) => {
 }
 
 const tickPlayerState = (prevState, state, prevInput, input) => {
-    state.animation = ''
+    state.animation = 'idle'
 
     // Store the previous state and copy it into the current state
     let onGround = doGroundCollision(state, (input.down && !state.dash));
@@ -252,7 +251,6 @@ const drawPlayerFromState = (ctx, state, prevState, interp) => {
     let drawX = lerp(prevState.x, state.x, interp);
     let drawY = lerp(prevState.y, state.y, interp);
 
-    // Draw the player
     playerVSprite.draw(ctx, drawX + playerWidth / 2, drawY + playerHeight + 2, 200, !state.right, state.animation)
 }
 

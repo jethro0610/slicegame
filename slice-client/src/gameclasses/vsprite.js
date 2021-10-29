@@ -1,42 +1,52 @@
 class VSprite {
     constructor(spriteJson) {
-        this.sprites = [];
         this.animations = new Map();
-        for (let spriteIndex in spriteJson.sprites){
-            let newSprite = new Sprite()
-            for(let shapeIndex in spriteJson.sprites[spriteIndex].shapes) {
-                let newShape = new Shape()
-                for(let vertIndex in spriteJson.sprites[spriteIndex].shapes[shapeIndex].verticies) {
-                    let vertexData = spriteJson.sprites[spriteIndex].shapes[shapeIndex].verticies[vertIndex]
-                    let newVertex = new Vertex(vertexData.x, vertexData.y)
-                    newShape.verticies.push(newVertex)
+        for (let animationIndex in spriteJson.animations){
+            let newAnimation = new Animation()
+            for (let spriteIndex in spriteJson.animations[animationIndex].sprites){
+                let newSprite = new Sprite()
+                for(let shapeIndex in spriteJson.animations[animationIndex].sprites[spriteIndex].shapes) {
+                    let newShape = new Shape()
+                    for(let vertIndex in spriteJson.animations[animationIndex].sprites[spriteIndex].shapes[shapeIndex].verticies) {
+                        let vertexData = spriteJson.animations[animationIndex].sprites[spriteIndex].shapes[shapeIndex].verticies[vertIndex]
+                        let newVertex = new Vertex(vertexData.x, vertexData.y)
+                        newShape.verticies.push(newVertex)
+                    }
+                    newSprite.shapes.push(newShape)
                 }
-                newSprite.shapes.push(newShape)
+                newAnimation.sprites.push(newSprite)
             }
-            this.sprites.push(newSprite)
+            this.animations.set(spriteJson.animations[animationIndex].name, newAnimation)
         }
+        this.incrementer = 0
+        this.frame = 0
+        this.last_time = performance.now()
     }
 
-    add_animation(startIndex, endIndex, name) {
-        this.animations.set(name, new VSpriteAnimation(startIndex, endIndex))
-    }
+    draw = (ctx, x, y, scale, flipped = false, animationName) => {
+        if (this.animations.length == 0)
+            return
+        
+        const animation = this.animations.get(animationName)
+        if (animation == undefined)
+            return
 
-    draw = (ctx, x, y, scale, flipped = false, animationName = '') => {
-        if (this.sprites.length <= 0)
-            return;
+        const cur_time = performance.now()
+        const delta_time = cur_time - this.last_time
+        this.last_time = cur_time
+        
+        this.incrementer += delta_time / 1000.0
+        if (this.incrementer > 1.0/24) {
+            this.frame += 1
+            this.incrementer = 0
+        }
+
+        const sprite_index = this.frame % animation.sprites.length
 
         ctx.fillStyle = 'black';
-        
         const flipMultiplier = flipped ? -1 : 1
 
-        let spriteIndex;
-        if (this.animations.length == 0 || animationName == '')
-            spriteIndex = 0;
-        else {
-            let animation = this.animations.get(animationName)
-            spriteIndex = (parseInt(Date.now()/45) % animation.length) + animation.startIndex
-        }
-        this.sprites[spriteIndex].shapes.forEach(shape => {
+        animation.sprites[sprite_index].shapes.forEach(shape => {
             ctx.beginPath();
             ctx.moveTo(x + shape.verticies[0].x * scale * flipMultiplier, y - shape.verticies[0].y * scale)
             for (let i = 1; i < shape.verticies.length; i++) {
@@ -48,10 +58,9 @@ class VSprite {
     }
 }
 
-class VSpriteAnimation {
-    constructor(startIndex, endIndex) {
-        this.startIndex = startIndex
-        this.length = startIndex - endIndex
+class Animation {
+    constructor() {
+        this.sprites = []
     }
 }
 
