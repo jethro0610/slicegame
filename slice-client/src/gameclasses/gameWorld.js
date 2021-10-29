@@ -1,4 +1,5 @@
 import { copyPlayerState, createPlayerState, doDashCollisions, drawPlayerFromState, playerWidth, tickEndRoundPlayerState, tickPlayerState, tickStartRoundPlayerState } from './player'
+import { drawPlatform } from './platform';
 import { getDefaultInput, getLocalInput } from "./input";
 import Collider from "./collider";
 import { ping } from "./networking";
@@ -16,6 +17,10 @@ const player2SpawnX = gameWidth - player1SpawnX - playerWidth;
 
 const startGameLength = 180;
 const startMessageLength = 60;
+
+const playerColor = 'rgb(180, 180, 180)'
+const platformColor = 'rgb(60, 60, 60)'
+const shadowColor = 'rgba(0, 0, 0, 0.5)'
 
 const startGame = (remote, isHost) => {
     gameWorld = new GameWorld(gameWidth, gameHeight, remote, isHost);
@@ -111,19 +116,32 @@ class GameWorld {
 
     draw = ctx => {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.fillStyle = 'rgb(30, 30, 30)'
+        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
         const state = this.states.get(this.tickCount);
         const prevState = this.states.get(this.tickCount - 1);
 
-        this.platforms.forEach(platform => {
-            // Draw the platform
-            ctx.fillStyle = 'black';
-            ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
-        });
 
+        // Draw the platform and player shadows
+        this.platforms.forEach(platform => {
+            drawPlatform(ctx, platform, shadowColor, 0, 5)
+        });
         if(this.tickCount >= 1) {
             const drawInterp = this.frameAccumulator / (tickTime + this.tickWaitTime);
-            drawPlayerFromState(ctx, state.player1State, prevState.player1State, drawInterp);
-            drawPlayerFromState(ctx, state.player2State, prevState.player2State, drawInterp);
+            drawPlayerFromState(ctx, state.player1State, prevState.player1State, drawInterp, shadowColor, 0, 5);
+            drawPlayerFromState(ctx, state.player2State, prevState.player2State, drawInterp, shadowColor, 0, 5);
+        }
+
+        // Draw the platform
+        this.platforms.forEach(platform => {
+            drawPlatform(ctx, platform, platformColor)
+        });
+
+        // Draw the players
+        if(this.tickCount >= 1) {
+            const drawInterp = this.frameAccumulator / (tickTime + this.tickWaitTime);
+            drawPlayerFromState(ctx, state.player1State, prevState.player1State, drawInterp, playerColor);
+            drawPlayerFromState(ctx, state.player2State, prevState.player2State, drawInterp, playerColor);
         }
 
         if (state.roundState == 0)

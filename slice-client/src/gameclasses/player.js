@@ -275,13 +275,13 @@ const doDashCollisions = (state1, state2) => {
     return 0;
 }
 
-const drawPlayerFromState = (ctx, state, prevState, interp) => {
+const drawPlayerFromState = (ctx, state, prevState, interp, color = 'black', offsetX = 0, offsetY = 0) => {
     // Get the position to draw the player in
     // It interpolates between the position the current and last tick
-    let drawX = lerp(prevState.x, state.x, interp);
-    let drawY = lerp(prevState.y, state.y, interp);
+    let drawX = lerp(prevState.x, state.x, interp) + offsetX;
+    let drawY = lerp(prevState.y, state.y, interp) + offsetY;
 
-    playerVSprite.draw(ctx, drawX + playerWidth / 2, drawY + playerHeight + 2, 200, !state.right, state.animation)
+    playerVSprite.draw(ctx, drawX + playerWidth / 2, drawY + playerHeight + 2, 200, color, !state.right, state.animation)
 }
 
 export { 
