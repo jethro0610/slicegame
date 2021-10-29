@@ -220,8 +220,8 @@ class GameWorld {
         }
         else if(state.roundState == 3) {
             // Tick the end round player states
-            tickEndRoundPlayerState(prevPlayer1State, player1State);
-            tickEndRoundPlayerState(prevPlayer2State, player2State);
+            tickEndRoundPlayerState(prevPlayer1State, player1State, state.roundWinner == 2);
+            tickEndRoundPlayerState(prevPlayer2State, player2State, state.roundWinner == 1);
 
             state.roundTimer += 1;
 

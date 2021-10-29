@@ -3,7 +3,7 @@ import { gameWorld } from "./gameWorld";
 import VSprite from './vsprite'
 
 // Create the player VSprite and add animations
-const playerVSpriteJson = require('../vsprites/char_jump3.json')
+const playerVSpriteJson = require('../vsprites/char.json')
 const playerVSprite = new VSprite(playerVSpriteJson)
 
 const playerWidth = 32;
@@ -60,6 +60,8 @@ const tickStartRoundPlayerState = (prevState, state) => {
 
 const tickPlayerState = (prevState, state, prevInput, input) => {
     state.animation = 'idle'
+    if (state.velX < -1 || state.velX > 1)
+        state.animation = 'skid'
 
     // Store the previous state and copy it into the current state
     let onGround = doGroundCollision(state, (input.down && !state.dash));
@@ -74,6 +76,7 @@ const tickPlayerState = (prevState, state, prevInput, input) => {
 
         if(!isInDashOrCooldown(state))
             calculateReversal(state, input); // Dash dance
+
     }
 
     // Ground Movement
@@ -98,6 +101,16 @@ const tickPlayerState = (prevState, state, prevInput, input) => {
     if(!onGround)  {// Only apply when not dashing or in cooldown fall 
         if(!isInDashOrCooldown(state) || isInCooldownFall(state))
             state.velY += gravity;
+
+        if (state.velY > 0)
+            state.animation = 'fall'
+        else {
+            const jumpFrame = parseInt((10 - parseInt((-state.velY / jumpStrength) * 10)));
+            if (jumpFrame > 9 || jumpFrame < 0 || state.airJumpsUsed < 1)
+                state.animation = 'jump'
+            else
+                state.animation = 'jump' + jumpFrame.toString();
+        }
     }
 
     // Jumping
@@ -118,11 +131,18 @@ const tickPlayerState = (prevState, state, prevInput, input) => {
         state.velY = state.velY * dashYTransfer;
     }
     // Subtract from dash timer and apply velocity
-    if (state.dash > 0)
+    if (state.dash > 0) {
         state.dash -= 1;
+        state.animation = 'dash'
+    }
     // Subtract from the cooldown timer
-    if (state.cooldown > 0)
+    if (state.cooldown > 0) {
         state.cooldown -= 1;
+        if (state.cooldown <= 5)
+            state.animation = 'skid'
+        else
+            state.animation = 'dash'
+    }
     // Apply cooldown slide
     if (state.dash <= 0 && state.dash !== false && state.cooldown === false) {
         state.cooldown = cooldownLength;
@@ -138,7 +158,7 @@ const tickPlayerState = (prevState, state, prevInput, input) => {
     doWallCollision(state);
 }
 
-const tickEndRoundPlayerState = (prevState, state) => {
+const tickEndRoundPlayerState = (prevState, state, loser = false) => {
     // Subtract from dash timer and apply velocity
     if (state.dash > 0)
         state.dash -= 1;
@@ -153,6 +173,9 @@ const tickEndRoundPlayerState = (prevState, state) => {
     // Apply velocities
     state.x += state.velX;
     state.y += state.velY;
+
+    if (loser)
+        state.animation = 'dashend'
 
     // Do wall collisions last, so player stays within bounds
     doWallCollision(state);
