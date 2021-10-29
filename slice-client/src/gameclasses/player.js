@@ -180,7 +180,7 @@ const tickEndRoundPlayerState = (prevState, state, loser = false) => {
     state.y += state.velY;
 
     if (loser)
-        state.animation = 'dashend'
+        state.animation = 'hit'
 
     // Do wall collisions last, so player stays within bounds
     doWallCollision(state);
@@ -261,11 +261,13 @@ const doDashCollisions = (state1, state2) => {
         if(isDashing(state1)) {
             state2.velX = state1.velX * knockback;
             state2.velY = state1.velY * knockback;
+            state2.right = !state1.right
             return 1;
         }
         else if (isDashing(state2)) {
             state1.velX = state2.velX * knockback;
             state1.velY = state2.velY * knockback;
+            state1.right = !state2.right
             return 2;
         }
     }
