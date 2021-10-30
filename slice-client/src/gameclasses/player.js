@@ -1,5 +1,6 @@
 import Collider from "./collider";
 import { gameWorld } from "./gameWorld";
+import { DashEffectState, LandEffectState } from './effect'
 import VSprite from './vsprite'
 
 // Create the player VSprite and add animations
@@ -60,6 +61,7 @@ const tickStartRoundPlayerState = (prevState, state) => {
 }
 
 const tickPlayerState = (prevState, state, prevInput, input) => {
+    const spawnedEffects = []
     state.animation = 'idle'
     state.animationFrame = -1
 
@@ -73,12 +75,15 @@ const tickPlayerState = (prevState, state, prevInput, input) => {
         if(prevState.velY > 0 || isInCooldownFall(state)) {
             state.dash = false;
             state.cooldown = false;
+            const landEffect = new LandEffectState(state.x, state.y + playerHeight, state.velX / 4)
+            spawnedEffects.push(landEffect)
         }
 
         state.airJumpsUsed = 0; // Reset air jumps
 
-        if(!isInDashOrCooldown(state))
+        if(!isInDashOrCooldown(state)) {
             calculateReversal(state, input); // Dash dance
+        }
 
     }
 
@@ -91,11 +96,21 @@ const tickPlayerState = (prevState, state, prevInput, input) => {
             state.animation = 'run'
             state.velX -= acceleration;
             state.right = false;
+
+            if (onGround && (!prevInput.left || prevInput.right)) {
+                const dashEffect = new DashEffectState(state.x, state.y + playerHeight, 1)
+                spawnedEffects.push(dashEffect)
+            }
         }
         else if(input.right && !input.left) {
             state.animation = 'run'
             state.velX += acceleration;
             state.right = true;
+
+            if (onGround && (!prevInput.right || prevInput.left)) {
+                const dashEffect = new DashEffectState(state.x, state.y + playerHeight, -1)
+                spawnedEffects.push(dashEffect)
+            }
         }
         state.velX -= state.velX * friction;
     }
@@ -109,6 +124,8 @@ const tickPlayerState = (prevState, state, prevInput, input) => {
             state.animation = 'fall'
         else {
             if (state.airJumpsUsed >= 1) {
+                // Determine what frame the air jump animaition should use based on the Y velocity
+                // ticks from 0-9 the lower the velocity gets (peak of jump)
                 const jumpFrame = parseInt((10 - parseInt((-state.velY / jumpStrength) * 10)));
                 state.animation = 'airJump'
                 state.animationFrame = jumpFrame
@@ -143,7 +160,7 @@ const tickPlayerState = (prevState, state, prevInput, input) => {
     // Subtract from the cooldown timer
     if (state.cooldown > 0) {
         state.cooldown -= 1;
-        if (state.cooldown <= 5)
+        if (state.cooldown <= 5) // Skid the player on the last 5 frames of dash
             state.animation = 'skid'
         else
             state.animation = 'dash'
@@ -161,6 +178,8 @@ const tickPlayerState = (prevState, state, prevInput, input) => {
 
     // Do wall collisions last, so player stays within bounds
     doWallCollision(state);
+
+    return spawnedEffects;
 }
 
 const tickEndRoundPlayerState = (prevState, state, loser = false) => {

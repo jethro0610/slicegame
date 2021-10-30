@@ -5,6 +5,8 @@ import Collider from "./collider";
 import { ping } from "./networking";
 import store from '../redux/store/store';
 import { setStarted } from '../redux/reducers/gameStarted';
+import { DashEffectState } from './effect';
+const lodash = require('lodash')
 
 let gameWorld = null;
 const tickTime = (1/60.0) * 1000;
@@ -39,31 +41,22 @@ const mapSetCapped = (map, key, value, cap) => {
     }
 }
 
-const createGameState = (player1State, player2State, roundState = 0, roundTimer = 0, messageTimer = 0, roundWinner = 0, player1Score = 0, player2Score = 0) => {
+const createGameState = (player1State, player2State) => {
     return { 
         player1State, 
         player2State, 
-        roundState,
-        roundTimer,
-        messageTimer,
-        roundWinner,
-        player1Score,
-        player2Score
+        roundState: 0,
+        roundTimer: 0,
+        messageTimer: 0,
+        roundWinner: 0,
+        player1Score: 0,
+        player2Score: 0,
+        effectStates: []
     };
 }
-
+    
 const copyGameState = (state) => {
-    return { 
-        player1State: state.player1State, 
-        player2State: state.player2State, 
-        roundState: state.roundState,
-        startGameTimer: state.startGameTimer,
-        roundTimer: state.roundTimer,
-        messageTimer: state.messageTimer,
-        roundWinner: state.roundWinner,
-        player1Score: state.player1Score,
-        player2Score: state.player2Score
-    };
+    return lodash.cloneDeep(state);
 }
 
 class GameWorld {
@@ -121,7 +114,6 @@ class GameWorld {
         const state = this.states.get(this.tickCount);
         const prevState = this.states.get(this.tickCount - 1);
 
-
         // Draw the platform and player shadows
         this.platforms.forEach(platform => {
             drawPlatform(ctx, platform, shadowColor, 0, 5)
@@ -132,7 +124,12 @@ class GameWorld {
             drawPlayerFromState(ctx, state.player2State, prevState.player2State, drawInterp, shadowColor, 0, 5);
         }
 
-        // Draw the platform
+        // Draw the effects
+        state.effectStates.forEach(effectState => {
+            effectState.draw(ctx)
+        })
+
+        // Draw the platforms
         this.platforms.forEach(platform => {
             drawPlatform(ctx, platform, platformColor)
         });
@@ -195,6 +192,16 @@ class GameWorld {
         let prevPlayer2State = state.player2State;
         let player2State = copyPlayerState(state.player2State);
 
+        // Tick effects
+        const newEffectStates = []
+        state.effectStates.forEach(effectState => {
+            const newState = lodash.cloneDeep(effectState)
+            newState.tick()
+            if (!newState.shouldDestroy()) // Don't push effects back into the state if they are to be destroyed
+                newEffectStates.push(newState)
+        })
+        state.effectStates = newEffectStates
+
         if(state.messageTimer > 0)
             state.messageTimer--;
 
@@ -217,17 +224,26 @@ class GameWorld {
         }
         else if(state.roundState == 2) {
             // Tick the player states
-            tickPlayerState(
+            const player1StateEffects = tickPlayerState(
                 prevPlayer1State, 
                 player1State,
                 prevPlayer1Input, 
                 player1Input);
 
-            tickPlayerState(
+            const player2StateEffects = tickPlayerState(
                 prevPlayer2State, 
                 player2State,
                 prevPlayer2Input, 
                 player2Input);
+            
+            
+            // Push the effects the player ticks created to the state
+            player1StateEffects.forEach(effectState => {
+                state.effectStates.push(effectState)
+            })
+            player2StateEffects.forEach(effectState => {
+                state.effectStates.push(effectState)
+            })
 
             // Get any dash collisions
             const dashCollisionResult = doDashCollisions(player1State, player2State);
