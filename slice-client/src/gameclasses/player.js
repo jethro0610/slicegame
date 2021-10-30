@@ -1,6 +1,6 @@
 import Collider from "./collider";
 import { platforms, levelWidth, levelHeight } from "./level";
-import { DashEffectState, LandEffectState } from './effect'
+import { AttackEffectState, DashEffectState, LandEffectState } from './effect'
 import VSprite from './vsprite'
 
 // Create the player VSprite and add animations

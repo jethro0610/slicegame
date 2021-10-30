@@ -93,9 +93,50 @@ class LandEffectState {
     }
 }
 
+class AttackEffectState {
+    constructor(startX, startY, direction) {
+        this.direction = direction
+        this.duration = 15;
+        this.curTime = 0;
+        this.x = []
+        this.y = []
+        this.velX = [] 
+        this.velY = []
+        for (let i = 0; i < 5; i++) {
+            this.x.push(startX + randomRange(-5, 5))
+            this.y.push(startY + randomRange(-5, 5))
+            this.velX.push(randomRange(5, 10) * direction)
+            this.velY.push(randomRange(2, -2))
+        }
+    }
+
+    tick = () => {
+        for (let i = 0; i < 5; i++) {
+            this.x[i] += this.velX[i];
+            this.y[i] += this.velY[i];
+        }
+        this.curTime += 1;
+    }
+    
+    draw = (ctx) => {
+        const opacity = 0.75 - (this.curTime / this.duration) * 0.75;
+        ctx.fillStyle = 'rgba(255, 255, 255, ' + opacity.toString() + ')';
+        const radius = 1 + (this.curTime / this.duration) * 2;
+        for (let i = 0; i < 5; i++) {
+            ctx.beginPath();
+            ctx.arc(this.x[i], this.y[i], radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    shouldDestroy = () => {
+        return this.curTime > this.duration;
+    }
+}
+
 /*
 ctx.lineTo(this.x[i] + radius * Math.sin((0 + this.rot[i]) * Math.PI / 180), this.y[i] + radius * Math.cos((0 + this.rot[i]) * Math.PI / 180))
 ctx.lineTo(this.x[i] + radius * Math.sin((120 + this.rot[i]) * Math.PI / 180), this.y[i] + radius * Math.cos((120 + this.rot[i]) * Math.PI / 180))
 ctx.lineTo(this.x[i] + radius * Math.sin((240 + this.rot[i]) * Math.PI / 180), this.y[i] + radius * Math.cos((240 + this.rot[i]) * Math.PI / 180))
 */
-export { DashEffectState, LandEffectState };
+export { DashEffectState, LandEffectState, AttackEffectState };
