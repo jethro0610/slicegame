@@ -2,6 +2,7 @@ import Collider from "./collider";
 import { gameWorld } from "./gameWorld";
 import { DashEffectState, LandEffectState } from './effect'
 import VSprite from './vsprite'
+const lodash = require('lodash')
 
 // Create the player VSprite and add animations
 const playerVSpriteJson = require('../vsprites/char.json')
@@ -35,22 +36,22 @@ const lerp = (a, b, t) => {
     return (1 - t) * a + t * b;
 }
 
-const createPlayerState = (x = 0, y = 0, velX = 0, velY = 0, airJumpsUsed = 0, dash = false, cooldown = false, right = true, animation='idle', animationFrame=-1) => {
-    return { x, y, velX, velY, airJumpsUsed, dash, cooldown, right, animation, animationFrame};
+const createPlayerState = (x = 0, y = 0, right = true) => {
+    return { 
+        x, 
+        y, 
+        velX: 0, 
+        velY: 0, 
+        airJumpsUsed: 0, 
+        dash: false, 
+        cooldown: false, 
+        right, 
+        animation: 'idle', 
+        animationFrame: -1};
 }
 
 const copyPlayerState = (state) =>{
-    return { 
-        x: state.x, 
-        y: state.y, 
-        velX: state.velX, 
-        velY: state.velY, 
-        airJumpsUsed: state.airJumpsUsed, 
-        dash: state.dash, 
-        cooldown: state.cooldown, 
-        right: state.right,
-        animation:state.animation,
-        animationFrame:state.animationFrame};
+    return lodash.cloneDeep(state)
 }
 
 const tickStartRoundPlayerState = (prevState, state) => {

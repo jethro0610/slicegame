@@ -94,6 +94,7 @@ class LandEffectState {
         return this.curTime > this.duration;
     }
 }
+
 /*
 ctx.lineTo(this.x[i] + radius * Math.sin((0 + this.rot[i]) * Math.PI / 180), this.y[i] + radius * Math.cos((0 + this.rot[i]) * Math.PI / 180))
 ctx.lineTo(this.x[i] + radius * Math.sin((120 + this.rot[i]) * Math.PI / 180), this.y[i] + radius * Math.cos((120 + this.rot[i]) * Math.PI / 180))

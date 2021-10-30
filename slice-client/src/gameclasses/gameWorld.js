@@ -81,7 +81,10 @@ class GameWorld {
         this.remoteInputs.set(0, getDefaultInput());
 
         // Create player 1 and copy their state to the first game state
-        this.states.set(0, createGameState(createPlayerState(player1SpawnX, -100), createPlayerState(player2SpawnX, -100)));
+        this.states.set(0, createGameState(
+            createPlayerState(player1SpawnX, -100, true), 
+            createPlayerState(player2SpawnX, -100, false)
+            ));
 
         this.platforms = [];
         this.platforms.push(new Collider(100, (height / 2), 400, 16));
@@ -236,7 +239,6 @@ class GameWorld {
                 prevPlayer2Input, 
                 player2Input);
             
-            
             // Push the effects the player ticks created to the state
             player1StateEffects.forEach(effectState => {
                 state.effectStates.push(effectState)
@@ -267,8 +269,8 @@ class GameWorld {
             }
             if (state.roundTimer == 150) {
                 state.roundState = 1;
-                player1State = createPlayerState(player1SpawnX, -100);
-                player2State = createPlayerState(player2SpawnX, -100);
+                player1State = createPlayerState(player1SpawnX, -100, true);
+                player2State = createPlayerState(player2SpawnX, -100, false);
                 state.roundTimer = 0;
             }
         }
