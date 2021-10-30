@@ -114,9 +114,9 @@ class GameWorld {
             drawPlayerFromState(ctx, state.player2State, prevState.player2State, drawInterp, playerColor);
         }
 
-        if (state.roundState == 0)
+        if (state.roundState === 0)
             this.drawText(ctx, 'Ready...');
-        else if(state.roundState == 3)
+        else if(state.roundState === 3)
             this.drawText(ctx, state.player1Score + ' - ' + state.player2Score);
         else
             this.drawTopText(ctx, state.player1Score + ' - ' + state.player2Score);
@@ -202,7 +202,7 @@ class GameWorld {
 
     executeRollback = () => {
         // Skip if no inputs were recieved (since rollbackTick is only set when inputs are sent)
-        if(this.rollbackTick == Infinity)
+        if(this.rollbackTick === Infinity)
             return;
 
         // Either rollback to the earliest recieved input, or the last tick where the remote

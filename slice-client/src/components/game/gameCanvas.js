@@ -5,9 +5,6 @@ import './css/gameCanvas.css'
 const GameCanvas = props => {
     // Reference to canvas
     const canvasRef = useRef(null);
-    const divStyle = {
-        'outlineWidth': '5px'
-    }
     useEffect(() => {
         // Get the actual canvas reference and the context of the canvas
         const canvas = canvasRef.current;

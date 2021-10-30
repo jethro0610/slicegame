@@ -1,4 +1,4 @@
-import {combineReducers, createStore, applyMiddleware, compose} from 'redux';
+import {combineReducers, createStore, compose} from 'redux';
 import { gameStartedReducer } from '../reducers/gameStarted';
 
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;

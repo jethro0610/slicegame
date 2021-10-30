@@ -48,7 +48,7 @@ const setRemote = (conn) => {
     });
 
     conn.on('data', data => {
-        if (data.frame != undefined)
+        if (data.frame !== undefined)
             gameWorld.onRecieveRemoteInput(data);
 
         if(data === 'request-ping')

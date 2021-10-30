@@ -1,4 +1,4 @@
-import { copyPlayerState, tickStartRoundPlayerState, tickEndRoundPlayerState, tickPlayerState, doDashCollisions, createPlayerState, playerWidth } from "./player";
+import { tickStartRoundPlayerState, tickEndRoundPlayerState, tickPlayerState, doDashCollisions, createPlayerState, playerWidth } from "./player";
 const lodash = require('lodash')
 const gameWidth = 1600;
 const gameHeight = 900;
@@ -61,6 +61,9 @@ const tickGameState = (state, player1Input, prevPlayer1Input, player2Input, prev
         case 3:
             tickEndRoundGameState(state, playerStateInfo)
             break;
+
+        default:
+            break;
     }
 
     // Update the player states
@@ -70,7 +73,7 @@ const tickGameState = (state, player1Input, prevPlayer1Input, player2Input, prev
 
 const tickStartGameState = (state, playerStateInfo) => {
     state.roundTimer++;
-    if(state.roundTimer == startGameLength) {
+    if(state.roundTimer === startGameLength) {
         state.roundState =1;
         state.roundTimer = 0;
         state.messageTimer = startMessageLength;
@@ -111,7 +114,7 @@ const tickMidroundGameState = (state, playerStateInfo) => {
 
     // Get any dash collisions
     const dashCollisionResult = doDashCollisions(playerStateInfo.player1State, playerStateInfo.player2State);
-    if(dashCollisionResult != 0) {
+    if(dashCollisionResult !== 0) {
         state.roundState = 3;
         state.roundWinner = dashCollisionResult;
     }
@@ -119,18 +122,18 @@ const tickMidroundGameState = (state, playerStateInfo) => {
 
 const tickEndRoundGameState = (state, playerStateInfo) => {
     // Tick the end round player states
-    tickEndRoundPlayerState(playerStateInfo.prevPlayer1State, playerStateInfo.player1State, state.roundWinner == 2);
-    tickEndRoundPlayerState(playerStateInfo.prevPlayer2State, playerStateInfo.player2State, state.roundWinner == 1);
+    tickEndRoundPlayerState(playerStateInfo.prevPlayer1State, playerStateInfo.player1State, state.roundWinner === 2);
+    tickEndRoundPlayerState(playerStateInfo.prevPlayer2State, playerStateInfo.player2State, state.roundWinner === 1);
 
     state.roundTimer += 1;
 
-    if(state.roundTimer == 60) {
-        if (state.roundWinner == 1)
+    if(state.roundTimer === 60) {
+        if (state.roundWinner === 1)
             state.player1Score++;
-        else if (state.roundWinner == 2)
+        else if (state.roundWinner === 2)
             state.player2Score++;
     }
-    if (state.roundTimer == 150) {
+    if (state.roundTimer === 150) {
         state.roundState = 1;
         playerStateInfo.player1State = createPlayerState(player1SpawnX, -100, true);
         playerStateInfo.player2State = createPlayerState(player2SpawnX, -100, false);

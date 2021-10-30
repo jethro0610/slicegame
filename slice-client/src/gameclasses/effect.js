@@ -1,5 +1,3 @@
-const lodash = require('lodash')
-
 const randomRange = (min, max) => {
     const range = max - min;
     return Math.random() * range + min

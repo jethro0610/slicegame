@@ -2,7 +2,6 @@ import Collider from "./collider";
 import { gameWorld } from "./gameWorld";
 import { DashEffectState, LandEffectState } from './effect'
 import VSprite from './vsprite'
-const lodash = require('lodash')
 
 // Create the player VSprite and add animations
 const playerVSpriteJson = require('../vsprites/char.json')
