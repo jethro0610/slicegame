@@ -1,24 +1,16 @@
-import { copyPlayerState, createPlayerState, doDashCollisions, drawPlayerFromState, playerWidth, tickEndRoundPlayerState, tickPlayerState, tickStartRoundPlayerState } from './player'
+import { drawPlayerFromState } from './player'
 import { drawPlatform } from './platform';
 import { getDefaultInput, getLocalInput } from "./input";
 import Collider from "./collider";
 import { ping } from "./networking";
 import store from '../redux/store/store';
 import { setStarted } from '../redux/reducers/gameStarted';
-import { DashEffectState } from './effect';
-const lodash = require('lodash')
+import { createGameState, tickGameState, gameWidth, gameHeight } from './game';
+const lodash = require('lodash');
 
 let gameWorld = null;
 const tickTime = (1/60.0) * 1000;
 const maxRollbackFrames = 300;
-
-const gameWidth = 1600;
-const gameHeight = 900;
-const player1SpawnX = 250;
-const player2SpawnX = gameWidth - player1SpawnX - playerWidth;
-
-const startGameLength = 180;
-const startMessageLength = 60;
 
 const playerColor = 'rgb(180, 180, 180)'
 const platformColor = 'rgb(60, 60, 60)'
@@ -41,24 +33,6 @@ const mapSetCapped = (map, key, value, cap) => {
     }
 }
 
-const createGameState = (player1State, player2State) => {
-    return { 
-        player1State, 
-        player2State, 
-        roundState: 0,
-        roundTimer: 0,
-        messageTimer: 0,
-        roundWinner: 0,
-        player1Score: 0,
-        player2Score: 0,
-        effectStates: []
-    };
-}
-    
-const copyGameState = (state) => {
-    return lodash.cloneDeep(state);
-}
-
 class GameWorld {
     constructor(width, height, remote, isHost) {
         this.width = width;
@@ -68,6 +42,8 @@ class GameWorld {
         this.remote = remote;
 
         this.states = new Map();
+        this.states.set(0, createGameState()); // Set the initial game state
+
         this.tickCount = 0;
         this.remoteTickCount = 0;
         this.tickWaitTime = 0;
@@ -79,12 +55,6 @@ class GameWorld {
         this.localInputs.set(0, getDefaultInput());
         this.remoteInputs = new Map();
         this.remoteInputs.set(0, getDefaultInput());
-
-        // Create player 1 and copy their state to the first game state
-        this.states.set(0, createGameState(
-            createPlayerState(player1SpawnX, -100, true), 
-            createPlayerState(player2SpawnX, -100, false)
-            ));
 
         this.platforms = [];
         this.platforms.push(new Collider(100, (height / 2), 400, 16));
@@ -187,102 +157,6 @@ class GameWorld {
         mapSetCapped(this.localInputs, this.tickCount, localInput, maxRollbackFrames);
     }
 
-    tickGameState = (stateTickCount, player1Input, prevPlayer1Input, player2Input, prevPlayer2Input) => {
-        // Create new states
-        let state = copyGameState(this.states.get(stateTickCount - 1));
-        let prevPlayer1State = state.player1State;
-        let player1State = copyPlayerState(state.player1State); 
-        let prevPlayer2State = state.player2State;
-        let player2State = copyPlayerState(state.player2State);
-
-        // Tick effects
-        const newEffectStates = []
-        state.effectStates.forEach(effectState => {
-            const newState = lodash.cloneDeep(effectState)
-            newState.tick()
-            if (!newState.shouldDestroy()) // Don't push effects back into the state if they are to be destroyed
-                newEffectStates.push(newState)
-        })
-        state.effectStates = newEffectStates
-
-        if(state.messageTimer > 0)
-            state.messageTimer--;
-
-        if(state.roundState == 0) {
-            state.roundTimer++;
-            if(state.roundTimer == startGameLength) {
-                state.roundState =1;
-                state.roundTimer = 0;
-                state.messageTimer = startMessageLength;
-            }
-            tickStartRoundPlayerState(prevPlayer1State, player1State);
-            tickStartRoundPlayerState(prevPlayer2State, player2State);
-        }
-        else if (state.roundState == 1) {
-            let player1OnGround = tickStartRoundPlayerState(prevPlayer1State, player1State);
-            let player2OnGround = tickStartRoundPlayerState(prevPlayer2State, player2State);
-
-            if(player1OnGround && player2OnGround)
-                state.roundState = 2;
-        }
-        else if(state.roundState == 2) {
-            // Tick the player states
-            const player1StateEffects = tickPlayerState(
-                prevPlayer1State, 
-                player1State,
-                prevPlayer1Input, 
-                player1Input);
-
-            const player2StateEffects = tickPlayerState(
-                prevPlayer2State, 
-                player2State,
-                prevPlayer2Input, 
-                player2Input);
-            
-            // Push the effects the player ticks created to the state
-            player1StateEffects.forEach(effectState => {
-                state.effectStates.push(effectState)
-            })
-            player2StateEffects.forEach(effectState => {
-                state.effectStates.push(effectState)
-            })
-
-            // Get any dash collisions
-            const dashCollisionResult = doDashCollisions(player1State, player2State);
-            if(dashCollisionResult != 0) {
-                state.roundState = 3;
-                state.roundWinner = dashCollisionResult;
-            }
-        }
-        else if(state.roundState == 3) {
-            // Tick the end round player states
-            tickEndRoundPlayerState(prevPlayer1State, player1State, state.roundWinner == 2);
-            tickEndRoundPlayerState(prevPlayer2State, player2State, state.roundWinner == 1);
-
-            state.roundTimer += 1;
-
-            if(state.roundTimer == 60) {
-                if (state.roundWinner == 1)
-                    state.player1Score++;
-                else if (state.roundWinner == 2)
-                    state.player2Score++;
-            }
-            if (state.roundTimer == 150) {
-                state.roundState = 1;
-                player1State = createPlayerState(player1SpawnX, -100, true);
-                player2State = createPlayerState(player2SpawnX, -100, false);
-                state.roundTimer = 0;
-            }
-        }
-
-        // Update the player states
-        state.player1State = player1State;
-        state.player2State = player2State;
-
-        // Add the game state to the map
-        mapSetCapped(this.states, stateTickCount, state, maxRollbackFrames);
-    }
-
     tick = () => {
         this.syncClockWithRemote();
         this.executeRollback();
@@ -310,9 +184,7 @@ class GameWorld {
             player1Input = this.remoteInputs.get(remoteInputIndex);
             prevPlayer1Input = this.remoteInputs.get(prevRemoteInputIndex);
         }
-
-        // Tick the game
-        this.tickGameState(this.tickCount, player1Input, prevPlayer1Input, player2Input, prevPlayer2Input);
+        this.tickGameStateAtTick(this.tickCount, player1Input, prevPlayer1Input, player2Input, prevPlayer2Input)
     }
 
     onRecieveRemoteInput = (remoteInput) => {
@@ -366,11 +238,17 @@ class GameWorld {
                 player1Input = this.remoteInputs.get(lastValidInput);
                 prevPlayer1Input = this.remoteInputs.get(missingInput ? lastValidInput : lastValidInput - 1);
             }
-            this.tickGameState(i, player1Input, prevPlayer1Input, player2Input, prevPlayer2Input);
+            this.tickGameStateAtTick(i, player1Input, prevPlayer1Input, player2Input, prevPlayer2Input)
         }
 
         // Reset rollback ticks so rollback's aren't executed till next input
         this.rollbackTick = Infinity;
+    }
+
+    tickGameStateAtTick = (stateTick, player1Input, prevPlayer1Input, player2Input, prevPlayer2Input) => {
+        const state = lodash.cloneDeep(this.states.get(stateTick - 1));
+        tickGameState(state, player1Input, prevPlayer1Input, player2Input, prevPlayer2Input)
+        mapSetCapped(this.states, stateTick, state, maxRollbackFrames);
     }
 }
 

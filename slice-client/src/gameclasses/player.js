@@ -50,10 +50,6 @@ const createPlayerState = (x = 0, y = 0, right = true) => {
         animationFrame: -1};
 }
 
-const copyPlayerState = (state) =>{
-    return lodash.cloneDeep(state)
-}
-
 const tickStartRoundPlayerState = (prevState, state) => {
     // Apply gravity and return whether or not the player is on the ground
     state.velY += gravity;
@@ -307,8 +303,7 @@ const drawPlayerFromState = (ctx, state, prevState, interp, color = 'black', off
 export { 
     playerWidth,
     playerHeight,
-    createPlayerState, 
-    copyPlayerState, 
+    createPlayerState,
     tickStartRoundPlayerState,
     tickPlayerState, 
     drawPlayerFromState, 
