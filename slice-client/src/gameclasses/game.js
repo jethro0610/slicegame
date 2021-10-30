@@ -1,11 +1,12 @@
-import { tickStartRoundPlayerState, tickEndRoundPlayerState, tickPlayerState, doDashCollisions, createPlayerState, playerWidth } from "./player";
+import { tickStartRoundPlayerState, tickEndRoundPlayerState, tickPlayerState, doDashCollisions, createPlayerState, playerWidth, drawPlayerFromState } from "./player";
+import { drawPlatform } from "./platform";
+import { levelHeight, levelWidth, platforms } from "./level";
+
 const lodash = require('lodash')
-const gameWidth = 1600;
-const gameHeight = 900;
 const startGameLength = 180;
 const startMessageLength = 60;
 const player1SpawnX = 250;
-const player2SpawnX = gameWidth - player1SpawnX - playerWidth;
+const player2SpawnX = levelWidth - player1SpawnX - playerWidth;
 
 const createGameState = () => {
     return { 
@@ -142,4 +143,54 @@ const tickEndRoundGameState = (state, playerStateInfo) => {
     }
 }
 
-export { createGameState, tickGameState, gameWidth, gameHeight, player1SpawnX, player2SpawnX }
+const playerColor = 'rgb(180, 180, 180)'
+const platformColor = 'rgb(60, 60, 60)'
+const shadowColor = 'rgba(0, 0, 0, 0.5)'
+const drawGameState = (prevState, state, ctx, drawInterp) => {
+    // Draw the platform and player shadows
+    platforms.forEach(platform => {
+        drawPlatform(ctx, platform, shadowColor, 0, 5)
+    });
+    drawPlayerFromState(ctx, state.player1State, prevState.player1State, drawInterp, shadowColor, 0, 5);
+    drawPlayerFromState(ctx, state.player2State, prevState.player2State, drawInterp, shadowColor, 0, 5);
+
+    // Draw the effects
+    state.effectStates.forEach(effectState => {
+        effectState.draw(ctx)
+    })
+
+    // Draw the platforms
+    platforms.forEach(platform => {
+        drawPlatform(ctx, platform, platformColor)
+    });
+
+    // Draw the players
+    drawPlayerFromState(ctx, state.player1State, prevState.player1State, drawInterp, playerColor);
+    drawPlayerFromState(ctx, state.player2State, prevState.player2State, drawInterp, playerColor);
+
+    if (state.roundState === 0)
+        drawText(ctx, 'Ready...');
+    else if(state.roundState === 3)
+        drawText(ctx, state.player1Score + ' - ' + state.player2Score);
+    else
+        drawTopText(ctx, state.player1Score + ' - ' + state.player2Score);
+
+    if (state.messageTimer > 0) 
+        drawText(ctx, 'Slice!');
+}
+
+const drawText = (ctx, text) => {
+    ctx.font = '125px Arial';
+    ctx.textAlign ='center';
+    ctx.fillStyle = 'black';
+    ctx.fillText(text, levelWidth / 2, (levelHeight / 2) + 50);
+}
+
+const drawTopText = (ctx, text) => {
+    ctx.font = '75px Arial';
+    ctx.textAlign ='center';
+    ctx.fillStyle = 'black';
+    ctx.fillText(text, levelWidth / 2, 80);
+}
+
+export { createGameState, tickGameState, drawGameState, player1SpawnX, player2SpawnX }

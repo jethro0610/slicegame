@@ -1,23 +1,17 @@
-import { drawPlayerFromState } from './player'
-import { drawPlatform } from './platform';
 import { getDefaultInput, getLocalInput } from "./input";
-import Collider from "./collider";
 import { ping } from "./networking";
 import store from '../redux/store/store';
 import { setStarted } from '../redux/reducers/gameStarted';
-import { createGameState, tickGameState, gameWidth, gameHeight } from './game';
+import { createGameState, drawGameState, tickGameState } from './game';
+import { levelWidth, levelHeight } from './level';
 const lodash = require('lodash');
 
 let gameWorld = null;
 const tickTime = (1/60.0) * 1000;
 const maxRollbackFrames = 300;
 
-const playerColor = 'rgb(180, 180, 180)'
-const platformColor = 'rgb(60, 60, 60)'
-const shadowColor = 'rgba(0, 0, 0, 0.5)'
-
 const startGame = (remote, isHost) => {
-    gameWorld = new GameWorld(gameWidth, gameHeight, remote, isHost);
+    gameWorld = new GameWorld(levelWidth, levelHeight, remote, isHost);
     store.dispatch(setStarted(true));
 }
 
@@ -56,28 +50,8 @@ class GameWorld {
         this.remoteInputs = new Map();
         this.remoteInputs.set(0, getDefaultInput());
 
-        this.platforms = [];
-        this.platforms.push(new Collider(100, (height / 2), 400, 16));
-        this.platforms.push(new Collider(width - 500, (height / 2), 400, 16));
-
-        this.platforms.push(new Collider((width / 2) - 150, (height /4), 300, 16));
-        this.platforms.push(new Collider((width / 2) - 250, (height / 2) + (height /4), 500, 16));
         this.lastTickTime = performance.now();
         this.frameAccumulator = 0;
-    }
-
-    drawText = (ctx, text) => {
-        ctx.font = '125px Arial';
-        ctx.textAlign ='center';
-        ctx.fillStyle = 'black';
-        ctx.fillText(text, this.width / 2, (this.height / 2) + 50);
-    }
-
-    drawTopText = (ctx, text) => {
-        ctx.font = '75px Arial';
-        ctx.textAlign ='center';
-        ctx.fillStyle = 'black';
-        ctx.fillText(text, this.width / 2, 80);
     }
 
     draw = ctx => {
@@ -86,43 +60,11 @@ class GameWorld {
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
         const state = this.states.get(this.tickCount);
         const prevState = this.states.get(this.tickCount - 1);
+        const drawInterp = this.frameAccumulator / (tickTime + this.tickWaitTime);
 
-        // Draw the platform and player shadows
-        this.platforms.forEach(platform => {
-            drawPlatform(ctx, platform, shadowColor, 0, 5)
-        });
-        if(this.tickCount >= 1) {
-            const drawInterp = this.frameAccumulator / (tickTime + this.tickWaitTime);
-            drawPlayerFromState(ctx, state.player1State, prevState.player1State, drawInterp, shadowColor, 0, 5);
-            drawPlayerFromState(ctx, state.player2State, prevState.player2State, drawInterp, shadowColor, 0, 5);
+        if (prevState !== undefined) {
+            drawGameState(prevState, state, ctx, drawInterp)
         }
-
-        // Draw the effects
-        state.effectStates.forEach(effectState => {
-            effectState.draw(ctx)
-        })
-
-        // Draw the platforms
-        this.platforms.forEach(platform => {
-            drawPlatform(ctx, platform, platformColor)
-        });
-
-        // Draw the players
-        if(this.tickCount >= 1) {
-            const drawInterp = this.frameAccumulator / (tickTime + this.tickWaitTime);
-            drawPlayerFromState(ctx, state.player1State, prevState.player1State, drawInterp, playerColor);
-            drawPlayerFromState(ctx, state.player2State, prevState.player2State, drawInterp, playerColor);
-        }
-
-        if (state.roundState === 0)
-            this.drawText(ctx, 'Ready...');
-        else if(state.roundState === 3)
-            this.drawText(ctx, state.player1Score + ' - ' + state.player2Score);
-        else
-            this.drawTopText(ctx, state.player1Score + ' - ' + state.player2Score);
-
-        if (state.messageTimer > 0) 
-            this.drawText(ctx, 'Slice!');
     }
 
     doTicks = () => {

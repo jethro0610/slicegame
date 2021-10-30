@@ -1,5 +1,5 @@
 import Collider from "./collider";
-import { gameWorld } from "./gameWorld";
+import { platforms, levelWidth, levelHeight } from "./level";
 import { DashEffectState, LandEffectState } from './effect'
 import VSprite from './vsprite'
 
@@ -224,7 +224,7 @@ const doGroundCollision = (state, shouldDrop) => {
     let collider = new Collider(state.x, state.y, playerWidth, playerHeight);
     let onGround = false;
 
-    gameWorld.platforms.forEach(platform => {
+    platforms.forEach(platform => {
         // If player is within horizontal bounds of platform...
         if(collider.getRight() >= platform.getLeft() && collider.getLeft() <= platform.getRight()){
             // If player is on top of platform...
@@ -236,10 +236,10 @@ const doGroundCollision = (state, shouldDrop) => {
         }
     });
 
-    if(collider.getBottom() >= gameWorld.height){
+    if(collider.getBottom() >= levelHeight){
         if(state.velY >= 0){
             onGround = true;
-            state.y = gameWorld.height - collider.height;
+            state.y = levelHeight - collider.height;
             state.velY = 0;
         }
     }
@@ -252,8 +252,8 @@ const doWallCollision = (state) => {
     let collider = new Collider(state.x, state.y, playerWidth, playerHeight);
 
     // Check for collision with walls
-    if(collider.getRight() >= gameWorld.width){
-        state.x = gameWorld.width - collider.width;
+    if(collider.getRight() >= levelWidth){
+        state.x = levelWidth - collider.width;
         state.velX = 0;
     }
     if(collider.getLeft() <= 0){
