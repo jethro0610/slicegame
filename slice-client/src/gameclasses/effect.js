@@ -198,9 +198,37 @@ class CaptureEffectState {
     }
 }
 
-/*
-ctx.lineTo(this.x[i] + radius * Math.sin((0 + this.rot[i]) * Math.PI / 180), this.y[i] + radius * Math.cos((0 + this.rot[i]) * Math.PI / 180))
-ctx.lineTo(this.x[i] + radius * Math.sin((120 + this.rot[i]) * Math.PI / 180), this.y[i] + radius * Math.cos((120 + this.rot[i]) * Math.PI / 180))
-ctx.lineTo(this.x[i] + radius * Math.sin((240 + this.rot[i]) * Math.PI / 180), this.y[i] + radius * Math.cos((240 + this.rot[i]) * Math.PI / 180))
-*/
-export { DashEffectState, LandEffectState, AttackEffectState, CaptureEffectState };
+class PointEffectState {
+    constructor(x, y, speed, duration) {
+        this.duration = duration
+        this.curTime = 0;
+        this.x = x;
+        this.y = y;
+        this.size = 0;
+        this.speed = speed;
+    }
+
+    tick = () => {
+        this.curTime += 1
+        this.size += this.speed
+        this.speed *= 0.98
+    }
+    
+    draw = (ctx) => {
+        const opacity = 1.0 - (this.curTime / this.duration);
+        ctx.strokeStyle = 'rgba(255, 255, 255, '+ opacity.toString() + ')';
+        ctx.beginPath();
+        ctx.lineTo(this.x, this.y + this.size)
+        ctx.lineTo(this.x + this.size, this.y)
+        ctx.lineTo(this.x, this.y - this.size)
+        ctx.lineTo(this.x - this.size, this.y)
+        ctx.closePath();
+        ctx.stroke();
+    }
+    
+    shouldDestroy = () => {
+        return this.curTime > this.duration;
+    }
+}
+
+export { DashEffectState, LandEffectState, AttackEffectState, CaptureEffectState, PointEffectState };

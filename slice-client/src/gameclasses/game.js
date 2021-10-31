@@ -1,12 +1,15 @@
 import { tickStartRoundPlayerState, tickEndRoundPlayerState, tickPlayerState, doDashCollisions, createPlayerState, playerWidth, drawPlayerFromState, playerHeight } from "./player";
 import { drawPlatform } from "./platform";
 import { levelHeight, levelWidth, platforms } from "./level";
+import { PointEffectState } from "./effect";
 
 const lodash = require('lodash')
 const startGameLength = 180;
 const startMessageLength = 60;
 const player1SpawnX = 250;
 const player2SpawnX = levelWidth - player1SpawnX - playerWidth;
+const topCaptureMax = 60
+const bottomCaptureMax = 90
 
 const createGameState = () => {
     return { 
@@ -124,37 +127,39 @@ const tickMidroundGameState = (state, playerStateInfo) => {
 
     // Add any capture points
     const topCapturePlayer = getPlayersOnTopCapturePoint(playerStateInfo.player1State, playerStateInfo.player2State)
-    if (topCapturePlayer == 0)
-        state.topCapture -= 1
-    else if (topCapturePlayer != 3)
+    if (topCapturePlayer === 0)
+        state.topCapture -= 0.25
+    else if (topCapturePlayer !== 3)
         state.topCapture += 1
 
     if (state.topCapture < 0)
         state.topCapture = 0
 
-    if (state.topCapture > 60) {
-        if (topCapturePlayer == 1)
+    if (state.topCapture > topCaptureMax) {
+        if (topCapturePlayer === 1)
             state.player1Score += 1
-        else if (topCapturePlayer == 2)
+        else if (topCapturePlayer === 2)
             state.player2Score += 1
         state.topCapture = 0
+        state.effectStates.push(new PointEffectState(levelWidth / 2, 255, 30, 60));
     }
 
     const bottomCapturePlayer = getPlayersOnBottomCapturePoint(playerStateInfo.player1State, playerStateInfo.player2State)
-    if (bottomCapturePlayer == 0)
-        state.bottomCapture -= 1
-    else if (bottomCapturePlayer != 3)
+    if (bottomCapturePlayer === 0)
+        state.bottomCapture -= 0.25
+    else if (bottomCapturePlayer !== 3)
         state.bottomCapture += 1
 
     if (state.bottomCapture < 0)
         state.bottomCapture = 0
 
-    if (state.bottomCapture > 120) {
-        if (bottomCapturePlayer == 1)
+    if (state.bottomCapture > bottomCaptureMax) {
+        if (bottomCapturePlayer === 1)
             state.player1Score += 1
-        else if (bottomCapturePlayer == 2)
+        else if (bottomCapturePlayer === 2)
             state.player2Score += 1
         state.bottomCapture = 0
+        state.effectStates.push(new PointEffectState(levelWidth / 2, 705, 30, 60));
     }
 }
 
@@ -167,9 +172,9 @@ const tickEndRoundGameState = (state, playerStateInfo) => {
 
     if(state.roundTimer === 60) {
         if (state.roundWinner === 1)
-            state.player1Score++;
+            state.player1Score += 5;
         else if (state.roundWinner === 2)
-            state.player2Score++;
+            state.player2Score += 5;
     }
     if (state.roundTimer === 150) {
         state.roundState = 1;
@@ -195,8 +200,8 @@ const drawGameState = (prevState, state, ctx, drawInterp) => {
         effectState.draw(ctx)
     })
 
-    drawCaptureIndicator(ctx, levelWidth / 2, 255, 50, state.topCapture / 60)
-    drawCaptureIndicator(ctx, levelWidth / 2, 705, 50, state.bottomCapture / 120)
+    drawCaptureIndicator(ctx, levelWidth / 2, 255, 50, state.topCapture / topCaptureMax)
+    drawCaptureIndicator(ctx, levelWidth / 2, 705, 50, state.bottomCapture / bottomCaptureMax)
 
     // Draw the platforms
     platforms.forEach(platform => {
@@ -219,7 +224,7 @@ const drawGameState = (prevState, state, ctx, drawInterp) => {
 }
 
 const playerIsStandingOn = (playerState, height, x0, x1) => {
-    return (playerState.y + playerHeight == height && playerState.x + playerWidth > x0 && playerState.x < x1)
+    return (playerState.y + playerHeight === height && playerState.x + playerWidth > x0 && playerState.x < x1)
 }
 
 const getPlayersOnTopCapturePoint = (player1State, player2State) => {
