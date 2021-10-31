@@ -39,8 +39,8 @@ class GameWorld {
         this.states = new Map();
 
         this.states.set(0, createGameState()); // Set the initial game state
-        this.states.get(0).effectStates.push(new CaptureEffectState((levelWidth / 2) - 250, (levelHeight / 2) + (levelHeight /4), 500, 60, 0.5) )
-        this.states.get(0).effectStates.push(new CaptureEffectState((levelWidth / 2) - 150, (levelHeight / 4), 300, 60, 0.5) )
+        //this.states.get(0).effectStates.push(new CaptureEffectState((levelWidth / 2) - 250, (levelHeight / 2) + (levelHeight /4), 500, 60, 0.5) )
+        //this.states.get(0).effectStates.push(new CaptureEffectState((levelWidth / 2) - 150, (levelHeight / 4), 300, 60, 0.5) )
 
         this.tickCount = 0;
         this.remoteTickCount = 0;
