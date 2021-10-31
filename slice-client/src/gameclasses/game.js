@@ -258,14 +258,14 @@ const getPlayersOnBottomCapturePoint = (player1State, player2State) => {
 const drawText = (ctx, text) => {
     ctx.font = '125px Arial';
     ctx.textAlign ='center';
-    ctx.fillStyle = 'black';
+    ctx.fillStyle = 'white';
     ctx.fillText(text, levelWidth / 2, (levelHeight / 2) + 50);
 }
 
 const drawTopText = (ctx, text) => {
     ctx.font = '75px Arial';
     ctx.textAlign ='center';
-    ctx.fillStyle = 'black';
+    ctx.fillStyle = 'white';
     ctx.fillText(text, levelWidth / 2, 80);
 }
 
@@ -279,7 +279,7 @@ const drawCaptureIndicator = (ctx, x, y, radius, amount) => {
 
     ctx.strokeStyle = 'gray';
     ctx.beginPath(); 
-    const easeRadius = radius * (1 - Math.pow(1 - amount, 3));
+    const easeRadius = radius * (1 - Math.pow(1 - amount, 2));
     ctx.lineTo(x + easeRadius * Math.sin((0) * Math.PI / 180), y + easeRadius * Math.cos((0) * Math.PI / 180))
     ctx.lineTo(x + easeRadius * 2 * Math.sin((120) * Math.PI / 180), y + easeRadius * Math.cos((120) * Math.PI / 180))
     ctx.lineTo(x + easeRadius * 2 * Math.sin((240) * Math.PI / 180), y + easeRadius * Math.cos((240) * Math.PI / 180))
