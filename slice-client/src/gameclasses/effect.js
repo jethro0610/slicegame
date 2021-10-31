@@ -134,9 +134,73 @@ class AttackEffectState {
     }
 }
 
+class CaptureEffectState {
+    constructor(x, y, width, duration, velY) {
+        this.curTime = 0;
+        this.x0 = x
+        this.x1 = x + width
+        this.startY = y
+        this.startVelY = velY
+        this.x = []
+        this.y = []
+        this.velY = []
+        this.rot = []
+        this.durations = []
+        this.duration = duration;
+        this.curTime = 0
+    }
+
+    addParticle = () => {
+        this.x.push(randomRange(this.x0, this.x1))
+        this.y.push(this.startY)
+        this.rot.push(randomRange(0, 360))
+        this.velY.push(randomRange(this.startVelY - 0.5, this.startVelY + 0.5))
+        this.durations.push(0)
+    }
+
+    tick = () => {
+        for (var i = 0; i < this.durations.length; i++) {
+            this.y[i] -= this.velY[i]
+            this.rot[i] += 1
+            this.durations[i] += 1
+            if (this.durations[i] > this.duration) {
+                this.x.splice(i, 1)
+                this.y.splice(i, 1)
+                this.rot.splice(i, 1)
+                this.velY.splice(i, 1)
+                this.durations.splice(i, 1)
+                i -= 1
+            }
+        }
+
+        this.curTime += 1
+        if (this.curTime < 3)
+            return
+        this.curTime = 0
+        this.addParticle()
+    }
+    
+    draw = (ctx) => {
+        for (var i = 0; i < this.durations.length; i++) {
+            const opacity = 0.5 - (this.durations[i] / this.duration) * 0.5;
+            const radius = 10 * opacity
+            ctx.fillStyle = 'rgba(255, 255, 255, ' + opacity.toString() + ')';
+            ctx.beginPath();
+            ctx.lineTo(this.x[i] + radius * Math.sin((0 + this.rot[i]) * Math.PI / 180), this.y[i] + radius * Math.cos((0 + this.rot[i]) * Math.PI / 180))
+            ctx.lineTo(this.x[i] + radius * Math.sin((120 + this.rot[i]) * Math.PI / 180), this.y[i] + radius * Math.cos((120 + this.rot[i]) * Math.PI / 180))
+            ctx.lineTo(this.x[i] + radius * Math.sin((240 + this.rot[i]) * Math.PI / 180), this.y[i] + radius * Math.cos((240 + this.rot[i]) * Math.PI / 180))
+            ctx.fill();
+        }
+    }
+    
+    shouldDestroy = () => {
+        return false;
+    }
+}
+
 /*
 ctx.lineTo(this.x[i] + radius * Math.sin((0 + this.rot[i]) * Math.PI / 180), this.y[i] + radius * Math.cos((0 + this.rot[i]) * Math.PI / 180))
 ctx.lineTo(this.x[i] + radius * Math.sin((120 + this.rot[i]) * Math.PI / 180), this.y[i] + radius * Math.cos((120 + this.rot[i]) * Math.PI / 180))
 ctx.lineTo(this.x[i] + radius * Math.sin((240 + this.rot[i]) * Math.PI / 180), this.y[i] + radius * Math.cos((240 + this.rot[i]) * Math.PI / 180))
 */
-export { DashEffectState, LandEffectState, AttackEffectState };
+export { DashEffectState, LandEffectState, AttackEffectState, CaptureEffectState };

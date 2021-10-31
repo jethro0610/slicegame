@@ -138,7 +138,6 @@ const tickEndRoundGameState = (state, playerStateInfo) => {
         state.roundState = 1;
         playerStateInfo.player1State = createPlayerState(player1SpawnX, -100, true);
         playerStateInfo.player2State = createPlayerState(player2SpawnX, -100, false);
-        console.log('Reset players')
         state.roundTimer = 0;
     }
 }

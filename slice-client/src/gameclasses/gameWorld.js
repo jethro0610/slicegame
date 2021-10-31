@@ -4,6 +4,7 @@ import store from '../redux/store/store';
 import { setStarted } from '../redux/reducers/gameStarted';
 import { createGameState, drawGameState, tickGameState } from './game';
 import { levelWidth, levelHeight } from './level';
+import { CaptureEffectState } from "./effect";
 const lodash = require('lodash');
 
 let gameWorld = null;
@@ -36,7 +37,10 @@ class GameWorld {
         this.remote = remote;
 
         this.states = new Map();
+
         this.states.set(0, createGameState()); // Set the initial game state
+        this.states.get(0).effectStates.push(new CaptureEffectState((levelWidth / 2) - 250, (levelHeight / 2) + (levelHeight /4), 500, 60, 0.5) )
+        this.states.get(0).effectStates.push(new CaptureEffectState((levelWidth / 2) - 150, (levelHeight / 4), 300, 60, 0.5) )
 
         this.tickCount = 0;
         this.remoteTickCount = 0;
@@ -56,7 +60,7 @@ class GameWorld {
 
     draw = ctx => {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-        ctx.fillStyle = 'rgb(30, 30, 30)'
+        ctx.fillStyle = 'rgb(20, 20, 20)'
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
         const state = this.states.get(this.tickCount);
         const prevState = this.states.get(this.tickCount - 1);
