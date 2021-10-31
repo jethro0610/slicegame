@@ -1,7 +1,7 @@
 import { tickStartRoundPlayerState, tickEndRoundPlayerState, tickPlayerState, doDashCollisions, createPlayerState, playerWidth, drawPlayerFromState, playerHeight } from "./player";
 import { drawPlatform } from "./platform";
 import { levelHeight, levelWidth, platforms } from "./level";
-import { PointEffectState } from "./effect";
+import { AttackEffectState, PointEffectState } from "./effect";
 
 const lodash = require('lodash')
 const startGameLength = 180;
@@ -53,7 +53,7 @@ const tickGameState = (state, player1Input, prevPlayer1Input, player2Input, prev
 
     if(state.messageTimer > 0)
         state.messageTimer--;
-
+    
     switch (state.roundState) {
         case 0:
             tickStartGameState(state, playerStateInfo)
@@ -148,6 +148,12 @@ const tickMidroundGameState = (state, playerStateInfo) => {
     if(dashCollisionResult !== 0) {
         state.roundState = 3;
         state.roundWinner = dashCollisionResult;
+        if (dashCollisionResult == 1) {
+            state.effectStates.push(new AttackEffectState(playerStateInfo.player1State.x, playerStateInfo.player1State.y + playerHeight / 2))
+        }
+        else if (dashCollisionResult == 2) {
+            state.effectStates.push(new AttackEffectState(playerStateInfo.player2State.x, playerStateInfo.player2State.y + playerHeight / 2))
+        }
     }
 
     // Add any capture points
@@ -217,8 +223,9 @@ const playerColor = 'rgb(180, 180, 180)'
 const platformColor = 'rgb(60, 60, 60)'
 const shadowColor = 'rgba(0, 0, 0, 0.5)'
 const drawGameState = (prevState, state, ctx, drawInterp) => {
+    // Don't interpolate if at the beginning of round (this prevents teleport visibility)
     if (state.roundState == 1 && state.roundTimer < 10)
-        drawInterp = 0;
+        drawInterp = 1.0;
 
     // Draw the platform and player shadows
     platforms.forEach(platform => {
@@ -255,38 +262,6 @@ const drawGameState = (prevState, state, ctx, drawInterp) => {
 
     if (state.messageTimer > 0) 
         drawText(ctx, 'Go!', state.textAnimTime);
-}
-
-const playerIsStandingOn = (playerState, height, x0, x1) => {
-    return (playerState.y + playerHeight === height && playerState.x + playerWidth > x0 && playerState.x < x1)
-}
-
-const getPlayersOnTopCapturePoint = (player1State, player2State) => {
-    const player1Standing = playerIsStandingOn(player1State, levelHeight /4, levelWidth / 2 - 150, levelWidth / 2 + 150);
-    const player2Standing = playerIsStandingOn(player2State, levelHeight /4, levelWidth / 2 - 150, levelWidth / 2 + 150);
-
-    if (player1Standing && player2Standing)
-        return 3
-    else if (player1Standing)
-        return 1
-    else if (player2Standing)
-        return 2
-    else 
-        return 0
-}
-
-const getPlayersOnBottomCapturePoint = (player1State, player2State) => {
-    const player1Standing = playerIsStandingOn(player1State, levelHeight / 2 + levelHeight / 4, levelWidth / 2 - 250, levelWidth / 2 + 250);
-    const player2Standing = playerIsStandingOn(player2State, levelHeight / 2 + levelHeight / 4, levelWidth / 2 - 250, levelWidth / 2 + 250);
-
-    if (player1Standing && player2Standing)
-        return 3
-    else if (player1Standing)
-        return 1
-    else if (player2Standing)
-        return 2
-    else 
-        return 0
 }
 
 const drawText = (ctx, text, textAnimTime) => {
@@ -328,6 +303,38 @@ const drawCaptureIndicator = (ctx, x, y, radius, amount) => {
     ctx.lineTo(x + easeRadius * 2 * Math.sin((240) * Math.PI / 180), y + easeRadius * Math.cos((240) * Math.PI / 180))
     ctx.closePath();
     ctx.stroke();
+}
+
+const playerIsStandingOn = (playerState, height, x0, x1) => {
+    return (playerState.y + playerHeight === height && playerState.x + playerWidth > x0 && playerState.x < x1)
+}
+
+const getPlayersOnTopCapturePoint = (player1State, player2State) => {
+    const player1Standing = playerIsStandingOn(player1State, levelHeight /4, levelWidth / 2 - 150, levelWidth / 2 + 150);
+    const player2Standing = playerIsStandingOn(player2State, levelHeight /4, levelWidth / 2 - 150, levelWidth / 2 + 150);
+
+    if (player1Standing && player2Standing)
+        return 3
+    else if (player1Standing)
+        return 1
+    else if (player2Standing)
+        return 2
+    else 
+        return 0
+}
+
+const getPlayersOnBottomCapturePoint = (player1State, player2State) => {
+    const player1Standing = playerIsStandingOn(player1State, levelHeight / 2 + levelHeight / 4, levelWidth / 2 - 250, levelWidth / 2 + 250);
+    const player2Standing = playerIsStandingOn(player2State, levelHeight / 2 + levelHeight / 4, levelWidth / 2 - 250, levelWidth / 2 + 250);
+
+    if (player1Standing && player2Standing)
+        return 3
+    else if (player1Standing)
+        return 1
+    else if (player2Standing)
+        return 2
+    else 
+        return 0
 }
 
 export { createGameState, tickGameState, drawGameState, player1SpawnX, player2SpawnX }

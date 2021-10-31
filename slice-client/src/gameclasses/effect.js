@@ -94,37 +94,46 @@ class LandEffectState {
 }
 
 class AttackEffectState {
-    constructor(startX, startY, direction) {
-        this.direction = direction
-        this.duration = 15;
+    constructor(startX, startY) {
+        this.duration = 60;
         this.curTime = 0;
         this.x = []
         this.y = []
         this.velX = [] 
         this.velY = []
-        for (let i = 0; i < 5; i++) {
+        this.rot = []
+        this.rotVel = []
+        for (let i = 0; i < 10; i++) {
+            const rotation = randomRange(0, 360) * (Math.PI / 180)
             this.x.push(startX + randomRange(-5, 5))
             this.y.push(startY + randomRange(-5, 5))
-            this.velX.push(randomRange(5, 10) * direction)
-            this.velY.push(randomRange(2, -2))
+            this.velX.push(Math.sin(rotation) * randomRange(4, 8))
+            this.velY.push(Math.cos(rotation) * randomRange(4, 8))
+            this.rot[i] = rotation
+            this.rotVel[i] = randomRange(-1, 1)
         }
     }
 
     tick = () => {
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 10; i++) {
             this.x[i] += this.velX[i];
             this.y[i] += this.velY[i];
+            this.velX[i] *= 0.95
+            this.velY[i] *= 0.95
+            this.rot[i] += this.rotVel[i]
         }
         this.curTime += 1;
     }
     
     draw = (ctx) => {
-        const opacity = 0.75 - (this.curTime / this.duration) * 0.75;
+        const opacity = 1.0 - (this.curTime / this.duration) * 1.0;
         ctx.fillStyle = 'rgba(255, 255, 255, ' + opacity.toString() + ')';
-        const radius = 1 + (this.curTime / this.duration) * 2;
-        for (let i = 0; i < 5; i++) {
+        const radius = 3 + (this.curTime / this.duration) * 10;
+        for (let i = 0; i < 10; i++) {
             ctx.beginPath();
-            ctx.arc(this.x[i], this.y[i], radius, 0, Math.PI * 2);
+            ctx.lineTo(this.x[i] + radius * Math.sin((0 + this.rot[i]) * Math.PI / 180), this.y[i] + radius * Math.cos((0 + this.rot[i]) * Math.PI / 180))
+            ctx.lineTo(this.x[i] + radius * Math.sin((120 + this.rot[i]) * Math.PI / 180), this.y[i] + radius * Math.cos((120 + this.rot[i]) * Math.PI / 180))
+            ctx.lineTo(this.x[i] + radius * Math.sin((240 + this.rot[i]) * Math.PI / 180), this.y[i] + radius * Math.cos((240 + this.rot[i]) * Math.PI / 180))
             ctx.fill();
         }
     }

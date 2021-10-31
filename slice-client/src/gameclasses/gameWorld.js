@@ -37,9 +37,8 @@ class GameWorld {
         this.remote = remote;
 
         this.states = new Map();
-
         this.states.set(0, createGameState()); // Set the initial game state
-        
+
         this.tickCount = 0;
         this.remoteTickCount = 0;
         this.tickWaitTime = 0;
