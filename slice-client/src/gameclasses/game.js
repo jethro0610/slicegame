@@ -23,6 +23,7 @@ const createGameState = () => {
         player2Score: 0,
         topCapture: 0,
         bottomCapture: 0,
+        textAnimTime: 1.0,
         effectStates: []
     };
 }
@@ -72,27 +73,51 @@ const tickGameState = (state, player1Input, prevPlayer1Input, player2Input, prev
             break;
     }
 
+    if (state.textAnimTime < 1.0)
+        state.textAnimTime += 0.075;
+    else
+        state.textAnimTime = 1.0
+
     // Update the player states
     state.player1State = playerStateInfo.player1State;
     state.player2State = playerStateInfo.player2State;
 }
 
 const tickStartGameState = (state, playerStateInfo) => {
+    if (state.roundTimer == 0)
+        state.textAnimTime = 0.0
     state.roundTimer++;
     if(state.roundTimer === startGameLength) {
         state.roundState = 1;
         state.roundTimer = 0;
         state.messageTimer = startMessageLength;
+        state.textAnimTime = 0.0
     }
-    tickStartRoundPlayerState(playerStateInfo.prevPlayer1State, playerStateInfo.player1State);
-    tickStartRoundPlayerState(playerStateInfo.prevPlayer2State, playerStateInfo.player2State);
+    const player1TickInfo = tickStartRoundPlayerState(playerStateInfo.prevPlayer1State, playerStateInfo.player1State);
+    const player2TickInfo = tickStartRoundPlayerState(playerStateInfo.prevPlayer2State, playerStateInfo.player2State);
+
+    // Push the effects the player ticks created to the state
+    player1TickInfo.spawnedEffects.forEach(effectState => {
+        state.effectStates.push(effectState)
+    });
+    player2TickInfo.spawnedEffects.forEach(effectState => {
+        state.effectStates.push(effectState)
+    });
 }
 
 const tickStartRoundGameState = (state, playerStateInfo) => {
-    const player1OnGround = tickStartRoundPlayerState(playerStateInfo.prevPlayer1State, playerStateInfo.player1State);
-    const player2OnGround = tickStartRoundPlayerState(playerStateInfo.prevPlayer2State, playerStateInfo.player2State);
+    const player1TickInfo = tickStartRoundPlayerState(playerStateInfo.prevPlayer1State, playerStateInfo.player1State);
+    const player2TickInfo = tickStartRoundPlayerState(playerStateInfo.prevPlayer2State, playerStateInfo.player2State);
 
-    if(player1OnGround && player2OnGround)
+    // Push the effects the player ticks created to the state
+    player1TickInfo.spawnedEffects.forEach(effectState => {
+        state.effectStates.push(effectState)
+    });
+    player2TickInfo.spawnedEffects.forEach(effectState => {
+        state.effectStates.push(effectState)
+    });
+
+    if(player1TickInfo.onGround && player2TickInfo.onGround)
         state.roundState = 2;
 }
 
@@ -142,6 +167,7 @@ const tickMidroundGameState = (state, playerStateInfo) => {
             state.player2Score += 1
         state.topCapture = 0
         state.effectStates.push(new PointEffectState(levelWidth / 2, 255, 30, 60));
+        state.textAnimTime = 0.0
     }
 
     const bottomCapturePlayer = getPlayersOnBottomCapturePoint(playerStateInfo.player1State, playerStateInfo.player2State)
@@ -160,6 +186,7 @@ const tickMidroundGameState = (state, playerStateInfo) => {
             state.player2Score += 1
         state.bottomCapture = 0
         state.effectStates.push(new PointEffectState(levelWidth / 2, 705, 30, 60));
+        state.textAnimTime = 0.0
     }
 }
 
@@ -175,6 +202,8 @@ const tickEndRoundGameState = (state, playerStateInfo) => {
             state.player1Score += 5;
         else if (state.roundWinner === 2)
             state.player2Score += 5;
+        state.textAnimTime = 0.0;
+        state.effectStates.push(new PointEffectState(levelWidth / 2, levelHeight / 2, 30, 60))
     }
     if (state.roundTimer === 150) {
         state.roundState = 1;
@@ -188,6 +217,9 @@ const playerColor = 'rgb(180, 180, 180)'
 const platformColor = 'rgb(60, 60, 60)'
 const shadowColor = 'rgba(0, 0, 0, 0.5)'
 const drawGameState = (prevState, state, ctx, drawInterp) => {
+    if (state.roundState == 1 && state.roundTimer < 10)
+        drawInterp = 0;
+
     // Draw the platform and player shadows
     platforms.forEach(platform => {
         drawPlatform(ctx, platform, shadowColor, 0, 5)
@@ -200,6 +232,7 @@ const drawGameState = (prevState, state, ctx, drawInterp) => {
         effectState.draw(ctx)
     })
 
+    // Draw the capture indicators under the platform
     drawCaptureIndicator(ctx, levelWidth / 2, 255, 50, state.topCapture / topCaptureMax)
     drawCaptureIndicator(ctx, levelWidth / 2, 705, 50, state.bottomCapture / bottomCaptureMax)
 
@@ -212,15 +245,16 @@ const drawGameState = (prevState, state, ctx, drawInterp) => {
     drawPlayerFromState(ctx, state.player1State, prevState.player1State, drawInterp, playerColor);
     drawPlayerFromState(ctx, state.player2State, prevState.player2State, drawInterp, playerColor);
 
+    // Draw the all UI texts
     if (state.roundState === 0)
-        drawText(ctx, 'Ready...');
+        drawText(ctx, 'Ready...', state.textAnimTime);
     else if(state.roundState === 3)
-        drawText(ctx, state.player1Score + ' - ' + state.player2Score);
+        drawText(ctx, state.player1Score + ' - ' + state.player2Score, state.textAnimTime);
     else
-        drawTopText(ctx, state.player1Score + ' - ' + state.player2Score);
+        drawTopText(ctx, state.player1Score + ' - ' + state.player2Score, state.textAnimTime);
 
     if (state.messageTimer > 0) 
-        drawText(ctx, 'Slice!');
+        drawText(ctx, 'Go!', state.textAnimTime);
 }
 
 const playerIsStandingOn = (playerState, height, x0, x1) => {
@@ -255,22 +289,31 @@ const getPlayersOnBottomCapturePoint = (player1State, player2State) => {
         return 0
 }
 
-const drawText = (ctx, text) => {
-    ctx.font = '125px Arial';
+const drawText = (ctx, text, textAnimTime) => {
+    ctx.font = '125px Work Sans';
     ctx.textAlign ='center';
-    ctx.fillStyle = 'white';
-    ctx.fillText(text, levelWidth / 2, (levelHeight / 2) + 50);
+    const easeTime = 1 - Math.pow(1 - textAnimTime, 4);
+    ctx.fillStyle = 'rgba(230, 230, 230, ' + textAnimTime.toString() + ')';
+    ctx.fillText(text, levelWidth / 2, (levelHeight / 2) + 50 - (-100 + easeTime * 100));
 }
 
-const drawTopText = (ctx, text) => {
-    ctx.font = '75px Arial';
+const drawTopText = (ctx, text, textAnimTime) => {
+    ctx.font = '75px Work Sans';
     ctx.textAlign ='center';
-    ctx.fillStyle = 'white';
-    ctx.fillText(text, levelWidth / 2, 80);
+    const easeTime = 1 - Math.pow(1 - textAnimTime, 4);
+    ctx.fillStyle = 'rgba(230, 230, 230, ' + textAnimTime.toString() + ')';
+    ctx.fillText(text, levelWidth / 2, 80 - (-100 + easeTime * 100));
 }
 
 const drawCaptureIndicator = (ctx, x, y, radius, amount) => {
-    ctx.fillStyle = 'rgb(10, 10, 10)';
+    ctx.fillStyle = shadowColor;
+    ctx.beginPath();
+    ctx.lineTo(x + radius * Math.sin((0) * Math.PI / 180), (y + 5) + radius * Math.cos((0) * Math.PI / 180))
+    ctx.lineTo(x + radius * 2 * Math.sin((120) * Math.PI / 180), (y + 5) + radius * Math.cos((120) * Math.PI / 180))
+    ctx.lineTo(x + radius * 2 * Math.sin((240) * Math.PI / 180), (y + 5) + radius * Math.cos((240) * Math.PI / 180))
+    ctx.fill();
+
+    ctx.fillStyle = 'rgb(30, 30, 30)';
     ctx.beginPath();
     ctx.lineTo(x + radius * Math.sin((0) * Math.PI / 180), y + radius * Math.cos((0) * Math.PI / 180))
     ctx.lineTo(x + radius * 2 * Math.sin((120) * Math.PI / 180), y + radius * Math.cos((120) * Math.PI / 180))

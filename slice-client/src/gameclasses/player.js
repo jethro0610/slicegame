@@ -50,10 +50,25 @@ const createPlayerState = (x = 0, y = 0, right = true) => {
 }
 
 const tickStartRoundPlayerState = (prevState, state) => {
+    const spawnedEffects = [];
+
     // Apply gravity and return whether or not the player is on the ground
     state.velY += gravity;
     state.y += state.velY;
-    return doGroundCollision(state, false);
+    const onGround =  doGroundCollision(state, false);
+
+    // Reset the dash if landing
+    if(onGround) {
+        state.animation = 'idle'
+        if (prevState.velY > 0) {
+            const landEffect = new LandEffectState(state.x, state.y + playerHeight, 0)
+            spawnedEffects.push(landEffect)
+        }
+    }
+    else
+        state.animation = 'fall'
+
+    return { onGround, spawnedEffects }
 }
 
 const tickPlayerState = (prevState, state, prevInput, input) => {
