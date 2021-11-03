@@ -4,7 +4,6 @@ import store from '../redux/store/store';
 import { setStarted } from '../redux/reducers/gameStarted';
 import { createGameState, drawGameState, tickGameState } from './game';
 import { levelWidth, levelHeight } from './level';
-import { CaptureEffectState } from "./effect";
 const lodash = require('lodash');
 
 let gameWorld = null;
@@ -107,7 +106,7 @@ class GameWorld {
         this.tickCount++;
         this.recordAndSendLocalInput();
 
-        // Determine who gives inputs to player 1
+        // Determine who gives inputs to player 1 and 2
         let player1Input, prevPlayer1Input, player2Input, prevPlayer2Input;
         if (this.isHost) {
             player1Input = this.localInputs.get(this.tickCount); 

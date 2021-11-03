@@ -190,7 +190,7 @@ const tickPlayerState = (prevState, state, prevInput, input) => {
     // Do wall collisions last, so player stays within bounds
     doWallCollision(state);
 
-    return spawnedEffects;
+    return { spawnedEffects };
 }
 
 const tickEndRoundPlayerState = (prevState, state, loser = false) => {
