@@ -9,8 +9,9 @@ const startGameLength = 180;
 const startMessageLength = 60;
 const player1SpawnX = 250;
 const player2SpawnX = levelWidth - player1SpawnX - playerWidth;
-const topCaptureMax = 60
-const bottomCaptureMax = 90
+const topCaptureMax = 60;
+const bottomCaptureMax = 90;
+const maxPoints = 10;
 
 const roundTypes = {
     STARTGAME: 0,
@@ -56,12 +57,12 @@ const tickGameState = (state, player1Input, prevPlayer1Input, player2Input, prev
     // are discraded
     const effectStates = []
     state.effectStates.forEach(effectState => {
-        const newState = lodash.cloneDeep(effectState)
-        newState.tick()
+        const newState = lodash.cloneDeep(effectState);
+        newState.tick();
         if (!newState.shouldDestroy()) // Don't push effects back into the state if they are to be destroyed
-            effectStates.push(newState)
+            effectStates.push(newState);
     })
-    state.effectStates = effectStates
+    state.effectStates = effectStates;
 
     // Tick the message and text timers until they are complete 
     // this means they are either not drawn on screen or are done animating
@@ -70,24 +71,25 @@ const tickGameState = (state, player1Input, prevPlayer1Input, player2Input, prev
     if (state.textAnimTime < 1.0)
         state.textAnimTime += 0.075;
     else
-        state.textAnimTime = 1.0
+        state.textAnimTime = 1.0;
 
     switch (state.roundState) {
         case roundTypes.STARTGAME:
-            tickStartGameState(state, playerStateInfo)
+            tickStartGameState(state, playerStateInfo);
             break;
 
         case roundTypes.STARTROUND:
-            tickStartRoundGameState(state, playerStateInfo)
+            tickStartRoundGameState(state, playerStateInfo);
             break;
         case roundTypes.FIGHT:
-            tickMidroundGameState(state, playerStateInfo)
+            tickMidroundGameState(state, playerStateInfo);
             break;
         case roundTypes.ENDROUND:
-            tickEndRoundGameState(state, playerStateInfo)
+            tickEndRoundGameState(state, playerStateInfo);
             break;
         case roundTypes.ENDGAME:
-            tickEndGameState(state)
+            tickEndGameState(state);
+            break;
         default:
             break;
     }
@@ -100,7 +102,7 @@ const tickGameState = (state, player1Input, prevPlayer1Input, player2Input, prev
 const tickStartGameState = (state, playerStateInfo) => {
     // At the start of the game, animate the intro text
     if (state.roundTimer === 0)
-        state.textAnimTime = 0.0
+        state.textAnimTime = 0.0;
 
     // Add the round timer and go to the next round once at the required time
     state.roundTimer++;
@@ -115,10 +117,10 @@ const tickStartGameState = (state, playerStateInfo) => {
 
     // Push the effects the player ticks created to the game effect state
     player1TickOutput.spawnedEffects.forEach(effectState => {
-        state.effectStates.push(effectState)
+        state.effectStates.push(effectState);
     });
     player2TickOutput.spawnedEffects.forEach(effectState => {
-        state.effectStates.push(effectState)
+        state.effectStates.push(effectState);
     });
 }
 
@@ -128,10 +130,10 @@ const tickStartRoundGameState = (state, playerStateInfo) => {
 
     // Push the effects the player ticks created to the state
     player1TickOutput.spawnedEffects.forEach(effectState => {
-        state.effectStates.push(effectState)
+        state.effectStates.push(effectState);
     });
     player2TickOutput.spawnedEffects.forEach(effectState => {
-        state.effectStates.push(effectState)
+        state.effectStates.push(effectState);
     });
 
     // Start the fight when both players touch the ground
@@ -155,10 +157,10 @@ const tickMidroundGameState = (state, playerStateInfo) => {
     
     // Push the effects the player ticks created to the state
     player1TickOutput.spawnedEffects.forEach(effectState => {
-        state.effectStates.push(effectState)
+        state.effectStates.push(effectState);
     });
     player2TickOutput.spawnedEffects.forEach(effectState => {
-        state.effectStates.push(effectState)
+        state.effectStates.push(effectState);
     });
 
     // Get any dash collisions and go to the next round
@@ -216,7 +218,7 @@ const tickMidroundGameState = (state, playerStateInfo) => {
         state.roundWinner = bottomCapturePlayer;
     }
 
-    if (state.player1Score >= 25 || state.player2Score >= 25) {
+    if (state.player1Score >= maxPoints || state.player2Score >= maxPoints) {
         playerStateInfo.player1State = createPlayerState(player1SpawnX, -100, true);
         playerStateInfo.player2State = createPlayerState(player2SpawnX, -100, false);
         state.roundTimer = 0;
@@ -239,16 +241,16 @@ const tickEndRoundGameState = (state, playerStateInfo) => {
             state.player2Score += 5;
 
         state.textAnimTime = 0.0;
-        state.effectStates.push(new PointEffectState(levelWidth / 2, levelHeight / 2, 30, 60))
+        state.effectStates.push(new PointEffectState(levelWidth / 2, levelHeight / 2, 30, 60));
     }
     if (state.roundTimer === 150) {
         state.roundState = roundTypes.STARTROUND;
         playerStateInfo.player1State = createPlayerState(player1SpawnX, -100, true);
         playerStateInfo.player2State = createPlayerState(player2SpawnX, -100, false);
         state.roundTimer = 0;
-        if (state.player1Score >= 25 || state.player2Score >= 25) {
+        if (state.player1Score >= maxPoints || state.player2Score >= maxPoints) {
             state.roundState = roundTypes.ENDGAME;
-            state.textAnimTime = 0.0
+            state.textAnimTime = 0.0;
         }
     }
 }
@@ -270,23 +272,23 @@ const drawGameState = (prevState, state, ctx, drawInterp) => {
 
     // Draw the platform and player shadows
     platforms.forEach(platform => {
-        drawPlatform(ctx, platform, shadowColor, 0, 5)
+        drawPlatform(ctx, platform, shadowColor, 0, 5);
     });
     drawPlayerFromState(ctx, state.player1State, prevState.player1State, drawInterp, shadowColor, 0, 5);
     drawPlayerFromState(ctx, state.player2State, prevState.player2State, drawInterp, shadowColor, 0, 5);
 
     // Draw the effects
     state.effectStates.forEach(effectState => {
-        effectState.draw(ctx)
+        effectState.draw(ctx);
     })
 
     // Draw the capture indicators under the platform
-    drawCaptureIndicator(ctx, levelWidth / 2, 255, 50, state.topCapture / topCaptureMax)
-    drawCaptureIndicator(ctx, levelWidth / 2, 705, 50, state.bottomCapture / bottomCaptureMax)
+    drawCaptureIndicator(ctx, levelWidth / 2, 255, 50, state.topCapture / topCaptureMax);
+    drawCaptureIndicator(ctx, levelWidth / 2, 705, 50, state.bottomCapture / bottomCaptureMax);
 
     // Draw the platforms
     platforms.forEach(platform => {
-        drawPlatform(ctx, platform, platformColor)
+        drawPlatform(ctx, platform, platformColor);
     });
 
     // Draw the players
@@ -327,17 +329,17 @@ const drawCaptureIndicator = (ctx, x, y, radius, amount) => {
     // Draw the capture point shadow
     ctx.fillStyle = shadowColor;
     ctx.beginPath();
-    ctx.lineTo(x + radius * Math.sin((0) * Math.PI / 180), (y + 5) + radius * Math.cos((0) * Math.PI / 180))
-    ctx.lineTo(x + radius * 2 * Math.sin((120) * Math.PI / 180), (y + 5) + radius * Math.cos((120) * Math.PI / 180))
-    ctx.lineTo(x + radius * 2 * Math.sin((240) * Math.PI / 180), (y + 5) + radius * Math.cos((240) * Math.PI / 180))
+    ctx.lineTo(x + radius * Math.sin((0) * Math.PI / 180), (y + 5) + radius * Math.cos((0) * Math.PI / 180));
+    ctx.lineTo(x + radius * 2 * Math.sin((120) * Math.PI / 180), (y + 5) + radius * Math.cos((120) * Math.PI / 180));
+    ctx.lineTo(x + radius * 2 * Math.sin((240) * Math.PI / 180), (y + 5) + radius * Math.cos((240) * Math.PI / 180));
     ctx.fill();
 
     // Draw the outline
     ctx.fillStyle = 'rgb(30, 30, 30)';
     ctx.beginPath();
-    ctx.lineTo(x + radius * Math.sin((0) * Math.PI / 180), y + radius * Math.cos((0) * Math.PI / 180))
-    ctx.lineTo(x + radius * 2 * Math.sin((120) * Math.PI / 180), y + radius * Math.cos((120) * Math.PI / 180))
-    ctx.lineTo(x + radius * 2 * Math.sin((240) * Math.PI / 180), y + radius * Math.cos((240) * Math.PI / 180))
+    ctx.lineTo(x + radius * Math.sin((0) * Math.PI / 180), y + radius * Math.cos((0) * Math.PI / 180));
+    ctx.lineTo(x + radius * 2 * Math.sin((120) * Math.PI / 180), y + radius * Math.cos((120) * Math.PI / 180));
+    ctx.lineTo(x + radius * 2 * Math.sin((240) * Math.PI / 180), y + radius * Math.cos((240) * Math.PI / 180));
     ctx.fill();
 
     // Draw the amount indicator
@@ -346,15 +348,15 @@ const drawCaptureIndicator = (ctx, x, y, radius, amount) => {
     ctx.strokeStyle = 'gray';
     ctx.beginPath(); 
     const easeRadius = radius * (1 - Math.pow(1 - amount, 2));
-    ctx.lineTo(x + easeRadius * Math.sin((0) * Math.PI / 180), y + easeRadius * Math.cos((0) * Math.PI / 180))
-    ctx.lineTo(x + easeRadius * 2 * Math.sin((120) * Math.PI / 180), y + easeRadius * Math.cos((120) * Math.PI / 180))
-    ctx.lineTo(x + easeRadius * 2 * Math.sin((240) * Math.PI / 180), y + easeRadius * Math.cos((240) * Math.PI / 180))
+    ctx.lineTo(x + easeRadius * Math.sin((0) * Math.PI / 180), y + easeRadius * Math.cos((0) * Math.PI / 180));
+    ctx.lineTo(x + easeRadius * 2 * Math.sin((120) * Math.PI / 180), y + easeRadius * Math.cos((120) * Math.PI / 180));
+    ctx.lineTo(x + easeRadius * 2 * Math.sin((240) * Math.PI / 180), y + easeRadius * Math.cos((240) * Math.PI / 180));
     ctx.closePath();
     ctx.stroke();
 }
 
 const playerIsStandingOn = (playerState, height, x0, x1) => {
-    return (playerState.y + playerHeight === height && playerState.x + playerWidth > x0 && playerState.x < x1)
+    return (playerState.y + playerHeight === height && playerState.x + playerWidth > x0 && playerState.x < x1);
 }
 
 const getPlayersOnTopCapturePoint = (player1State, player2State) => {
@@ -362,13 +364,13 @@ const getPlayersOnTopCapturePoint = (player1State, player2State) => {
     const player2Standing = playerIsStandingOn(player2State, levelHeight /4, levelWidth / 2 - 150, levelWidth / 2 + 150);
 
     if (player1Standing && player2Standing)
-        return 3
+        return 3;
     else if (player1Standing)
-        return 1
+        return 1;
     else if (player2Standing)
-        return 2
+        return 2;
     else 
-        return 0
+        return 0;
 }
 
 const getPlayersOnBottomCapturePoint = (player1State, player2State) => {
@@ -376,13 +378,13 @@ const getPlayersOnBottomCapturePoint = (player1State, player2State) => {
     const player2Standing = playerIsStandingOn(player2State, levelHeight / 2 + levelHeight / 4, levelWidth / 2 - 250, levelWidth / 2 + 250);
 
     if (player1Standing && player2Standing)
-        return 3
+        return 3;
     else if (player1Standing)
-        return 1
+        return 1;
     else if (player2Standing)
-        return 2
+        return 2;
     else 
-        return 0
+        return 0;
 }
 
-export { createGameState, tickGameState, drawGameState, player1SpawnX, player2SpawnX }
+export { createGameState, tickGameState, drawGameState, player1SpawnX, player2SpawnX };
