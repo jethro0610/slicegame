@@ -2,8 +2,8 @@ import { tickStartRoundPlayerState, tickEndRoundPlayerState, tickPlayerState, do
 import { drawPlatform } from "./platform";
 import { levelHeight, levelWidth, platforms } from "./level";
 import { AttackEffectState, PointEffectState } from "./effect";
-
 const lodash = require('lodash')
+
 const startGameLength = 180;
 const startMessageLength = 60;
 const player1SpawnX = 250;
@@ -15,7 +15,8 @@ const roundTypes = {
     STARTGAME: 0,
     STARTROUND: 1,
     FIGHT: 2,
-    END: 3
+    ENDROUND: 3,
+    ENDGAME: 4
 }
 
 const createGameState = () => {
@@ -81,10 +82,11 @@ const tickGameState = (state, player1Input, prevPlayer1Input, player2Input, prev
         case roundTypes.FIGHT:
             tickMidroundGameState(state, playerStateInfo)
             break;
-        case roundTypes.END:
+        case roundTypes.ENDROUND:
             tickEndRoundGameState(state, playerStateInfo)
             break;
-
+        case roundTypes.ENDGAME:
+            tickEndGameState(state)
         default:
             break;
     }
@@ -162,7 +164,7 @@ const tickMidroundGameState = (state, playerStateInfo) => {
     // also creates any needed effects
     const dashCollisionResult = doDashCollisions(playerStateInfo.player1State, playerStateInfo.player2State);
     if(dashCollisionResult !== 0) {
-        state.roundState = roundTypes.END;
+        state.roundState = roundTypes.ENDROUND;
         state.roundWinner = dashCollisionResult;
         if (dashCollisionResult === 1)
             state.effectStates.push(new AttackEffectState(playerStateInfo.player1State.x, playerStateInfo.player1State.y + playerHeight / 2))
@@ -231,6 +233,16 @@ const tickEndRoundGameState = (state, playerStateInfo) => {
         playerStateInfo.player1State = createPlayerState(player1SpawnX, -100, true);
         playerStateInfo.player2State = createPlayerState(player2SpawnX, -100, false);
         state.roundTimer = 0;
+        if (state.player1Score >= 25 || state.player2Score >= 25) {
+            state.roundState = roundTypes.ENDGAME;
+            state.textAnimTime = 0.0
+        }
+    }
+}
+
+const tickEndGameState = (state) => {
+    if (state.roundTimer === 120) {
+        // disconnec tthe game
     }
 }
 
@@ -238,8 +250,8 @@ const playerColor = 'rgb(180, 180, 180)'
 const platformColor = 'rgb(60, 60, 60)'
 const shadowColor = 'rgba(0, 0, 0, 0.5)'
 const drawGameState = (prevState, state, ctx, drawInterp) => {
-    // Don't interpolate if at the beginning of round (this prevents teleport trailing)
-    if (state.roundState === roundTypes.STARTROUND && state.roundTimer < 10)
+    // Don't interpolate if at the beginning of round or end of game (this prevents teleport trailing)
+    if ((state.roundState === roundTypes.STARTROUND && state.roundTimer < 10) || state.roundState === roundTypes.ENDGAME)
         drawInterp = 1.0;
 
     // Draw the platform and player shadows
@@ -270,8 +282,10 @@ const drawGameState = (prevState, state, ctx, drawInterp) => {
     // Draw the all UI texts
     if (state.roundState === roundTypes.STARTGAME)
         drawText(ctx, 'Ready...', state.textAnimTime);
-    else if(state.roundState === roundTypes.END) // Draw the score in the middle of the screen
+    else if(state.roundState === roundTypes.ENDROUND) // Draw the score in the middle of the screen
         drawText(ctx, state.player1Score + ' - ' + state.player2Score, state.textAnimTime);
+    else if (state.roundState === roundTypes.ENDGAME)
+        drawText(ctx, "Player " + state.roundWinner + " Wins", state.textAnimTime);
     else // Draw the score at the top of the screen
         drawTopText(ctx, state.player1Score + ' - ' + state.player2Score, state.textAnimTime);
 
@@ -313,6 +327,8 @@ const drawCaptureIndicator = (ctx, x, y, radius, amount) => {
     ctx.fill();
 
     // Draw the amount indicator
+    if (amount <= 0)
+        return;
     ctx.strokeStyle = 'gray';
     ctx.beginPath(); 
     const easeRadius = radius * (1 - Math.pow(1 - amount, 2));
