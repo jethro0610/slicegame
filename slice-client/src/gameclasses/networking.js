@@ -86,4 +86,4 @@ window.disconnectFromRemote = () => {
     disconnect();
 }
 
-export { ping };
+export { ping, disconnect };

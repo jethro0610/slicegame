@@ -7,6 +7,7 @@ import { levelWidth, levelHeight } from './level';
 const lodash = require('lodash');
 
 let gameWorld = null;
+let destroyOnNextDraw = false; // This is required so the gameWorld is set to null after its done drawing
 const tickTime = (1/60.0) * 1000;
 const maxRollbackFrames = 300;
 
@@ -17,7 +18,7 @@ const startGame = (remote, isHost) => {
 
 const stopGame = () => {
     store.dispatch(setStarted(false));
-    gameWorld = null;
+    destroyOnNextDraw = true;
 }
 
 const mapSetCapped = (map, key, value, cap) => {
@@ -65,6 +66,9 @@ class GameWorld {
         if (prevState !== undefined) {
             drawGameState(prevState, state, ctx, drawInterp)
         }
+
+        if (destroyOnNextDraw)
+            gameWorld = null;
     }
 
     doTicks = () => {

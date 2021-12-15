@@ -2,6 +2,7 @@ import { tickStartRoundPlayerState, tickEndRoundPlayerState, tickPlayerState, do
 import { drawPlatform } from "./platform";
 import { levelHeight, levelWidth, platforms } from "./level";
 import { AttackEffectState, PointEffectState } from "./effect";
+import { disconnect } from './networking'
 const lodash = require('lodash')
 
 const startGameLength = 180;
@@ -167,48 +168,60 @@ const tickMidroundGameState = (state, playerStateInfo) => {
         state.roundState = roundTypes.ENDROUND;
         state.roundWinner = dashCollisionResult;
         if (dashCollisionResult === 1)
-            state.effectStates.push(new AttackEffectState(playerStateInfo.player1State.x, playerStateInfo.player1State.y + playerHeight / 2))
+            state.effectStates.push(new AttackEffectState(playerStateInfo.player1State.x, playerStateInfo.player1State.y + playerHeight / 2));
         else if (dashCollisionResult === 2)
-            state.effectStates.push(new AttackEffectState(playerStateInfo.player2State.x, playerStateInfo.player2State.y + playerHeight / 2))
+            state.effectStates.push(new AttackEffectState(playerStateInfo.player2State.x, playerStateInfo.player2State.y + playerHeight / 2));
     }
 
     // Add any capture points
-    const topCapturePlayer = getPlayersOnTopCapturePoint(playerStateInfo.player1State, playerStateInfo.player2State)
+    const topCapturePlayer = getPlayersOnTopCapturePoint(playerStateInfo.player1State, playerStateInfo.player2State);
     if (topCapturePlayer === 0)
-        state.topCapture -= 0.25
+        state.topCapture -= 0.25;
     else if (topCapturePlayer !== 3)
-        state.topCapture += 1
+        state.topCapture += 1;
 
     if (state.topCapture < 0)
-        state.topCapture = 0
+        state.topCapture = 0;
 
     if (state.topCapture > topCaptureMax) {
         if (topCapturePlayer === 1)
-            state.player1Score += 1
+            state.player1Score += 1;
         else if (topCapturePlayer === 2)
-            state.player2Score += 1
-        state.topCapture = 0
+            state.player2Score += 1;
+        state.topCapture = 0;
         state.effectStates.push(new PointEffectState(levelWidth / 2, 255, 30, 60));
-        state.textAnimTime = 0.0
+        state.textAnimTime = 0.0;
+        state.roundWinner = topCapturePlayer;
     }
 
     const bottomCapturePlayer = getPlayersOnBottomCapturePoint(playerStateInfo.player1State, playerStateInfo.player2State)
     if (bottomCapturePlayer === 0)
-        state.bottomCapture -= 0.25
+        state.bottomCapture -= 0.25;
     else if (bottomCapturePlayer !== 3)
-        state.bottomCapture += 1
+        state.bottomCapture += 1;
 
     if (state.bottomCapture < 0)
-        state.bottomCapture = 0
+        state.bottomCapture = 0;
 
     if (state.bottomCapture > bottomCaptureMax) {
-        if (bottomCapturePlayer === 1)
-            state.player1Score += 1
-        else if (bottomCapturePlayer === 2)
-            state.player2Score += 1
-        state.bottomCapture = 0
+        if (bottomCapturePlayer === 1) {
+            state.player1Score += 1;
+        }
+        else if (bottomCapturePlayer === 2) {
+            state.player2Score += 1;
+        }
+        state.bottomCapture = 0;
         state.effectStates.push(new PointEffectState(levelWidth / 2, 705, 30, 60));
-        state.textAnimTime = 0.0
+        state.textAnimTime = 0.0;
+        state.roundWinner = bottomCapturePlayer;
+    }
+
+    if (state.player1Score >= 25 || state.player2Score >= 25) {
+        playerStateInfo.player1State = createPlayerState(player1SpawnX, -100, true);
+        playerStateInfo.player2State = createPlayerState(player2SpawnX, -100, false);
+        state.roundTimer = 0;
+        state.roundState = roundTypes.ENDGAME;
+        state.textAnimTime = 0.0;
     }
 }
 
@@ -241,8 +254,9 @@ const tickEndRoundGameState = (state, playerStateInfo) => {
 }
 
 const tickEndGameState = (state) => {
+    state.roundTimer += 1;
     if (state.roundTimer === 120) {
-        // disconnec tthe game
+        disconnect();
     }
 }
 
