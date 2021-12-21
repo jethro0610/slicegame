@@ -2,8 +2,8 @@ import { tickStartRoundPlayerState, tickEndRoundPlayerState, tickPlayerState, do
 import { drawPlatform } from "./platform";
 import { levelHeight, levelWidth, platforms } from "./level";
 import { AttackEffectState, PointEffectState } from "./effect";
-import { disconnect } from './networking'
-const lodash = require('lodash')
+import { disconnect } from './networking';
+const lodash = require('lodash');
 
 const startGameLength = 180;
 const startMessageLength = 60;
