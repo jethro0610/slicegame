@@ -1,4 +1,5 @@
 import { tickStartRoundPlayerState, tickEndRoundPlayerState, tickPlayerState, doDashCollisions, createPlayerState, playerWidth, drawPlayerFromState, playerHeight } from "./player";
+import { createCaptureState, drawCaptureState, tickCaptureState } from './capture';
 import { drawPlatform } from "./platform";
 import { levelHeight, levelWidth, platforms } from "./level";
 import { AttackEffectState, PointEffectState } from "./effect";
@@ -9,8 +10,6 @@ const startGameLength = 180;
 const startMessageLength = 60;
 const player1SpawnX = 250;
 const player2SpawnX = levelWidth - player1SpawnX - playerWidth;
-const topCaptureMax = 60;
-const bottomCaptureMax = 90;
 const maxPoints = 10;
 
 const roundTypes = {
@@ -25,6 +24,8 @@ const createGameState = () => {
     return { 
         player1State: createPlayerState(player1SpawnX, -100, true), 
         player2State: createPlayerState(player2SpawnX, -100, false), 
+        topCaptureState: createCaptureState(60, levelWidth / 2, levelHeight / 4, 300),
+        bottomCaptureState: createCaptureState(90, levelWidth / 2, levelHeight / 2 + levelHeight / 4, 300),
         roundState: roundTypes.STARTGAME,
         roundTimer: 0,
         goTimer: 0, 
@@ -36,6 +37,21 @@ const createGameState = () => {
         uiAnimTime: 1.0,
         effectStates: []
     };
+}
+
+const tickEffectStates = (states) => {
+    // Tick effects by cloning the origial
+    // this clone then replaces the effect states
+    // of the game state. Effects that need to be destroyed
+    // are discraded
+    const newStates = [];
+    states.forEach(effectState => {
+        const newState = lodash.cloneDeep(effectState);
+        newState.tick();
+        if (!newState.shouldDestroy()) // Don't push effects back into the state if they are to be destroyed
+            newStates.push(newState);
+    })
+    return newStates;
 }
 
 const tickGameState = (state, player1Input, prevPlayer1Input, player2Input, prevPlayer2Input) => {
@@ -51,18 +67,12 @@ const tickGameState = (state, player1Input, prevPlayer1Input, player2Input, prev
         player2State: lodash.cloneDeep(state.player2State)
     }
 
-    // Tick effects by cloning the origial
-    // this clone then replaces the effect states
-    // of the game state. Effects that need to be destroyed
-    // are discraded
-    const effectStates = []
-    state.effectStates.forEach(effectState => {
-        const newState = lodash.cloneDeep(effectState);
-        newState.tick();
-        if (!newState.shouldDestroy()) // Don't push effects back into the state if they are to be destroyed
-            effectStates.push(newState);
-    })
-    state.effectStates = effectStates;
+    // Create new states for capture points
+    state.topCaptureState = lodash.cloneDeep(state.topCaptureState);
+    state.bottomCaptureState = lodash.cloneDeep(state.bottomCaptureState);
+
+    // Tick and update the effects
+    state.effectStates = tickEffectStates(state.effectStates);
 
     // Tick the message and text timers until they are complete 
     // this means they are either not drawn on screen or are done animating
@@ -116,25 +126,17 @@ const tickStartGameState = (state, playerStateInfo) => {
     const player2TickOutput = tickStartRoundPlayerState(playerStateInfo.prevPlayer2State, playerStateInfo.player2State);
 
     // Push the effects the player ticks created to the game effect state
-    player1TickOutput.spawnedEffects.forEach(effectState => {
-        state.effectStates.push(effectState);
-    });
-    player2TickOutput.spawnedEffects.forEach(effectState => {
-        state.effectStates.push(effectState);
-    });
+    Array.prototype.push.apply(state.effectStates, player1TickOutput.spawnedEffects);
+    Array.prototype.push.apply(state.effectStates, player2TickOutput.spawnedEffects);
 }
 
 const tickStartRoundGameState = (state, playerStateInfo) => {
     const player1TickOutput = tickStartRoundPlayerState(playerStateInfo.prevPlayer1State, playerStateInfo.player1State);
     const player2TickOutput = tickStartRoundPlayerState(playerStateInfo.prevPlayer2State, playerStateInfo.player2State);
 
-    // Push the effects the player ticks created to the state
-    player1TickOutput.spawnedEffects.forEach(effectState => {
-        state.effectStates.push(effectState);
-    });
-    player2TickOutput.spawnedEffects.forEach(effectState => {
-        state.effectStates.push(effectState);
-    });
+    // Push the effects the player ticks created to the game effect state
+    state.effectStates.push.apply(player1TickOutput.spawnedEffects);
+    state.effectStates.push.apply(player2TickOutput.spawnedEffects);
 
     // Start the fight when both players touch the ground
     if(player1TickOutput.onGround && player2TickOutput.onGround)
@@ -155,13 +157,9 @@ const tickMidroundGameState = (state, playerStateInfo) => {
         playerStateInfo.prevPlayer2Input, 
         playerStateInfo.player2Input);
     
-    // Push the effects the player ticks created to the state
-    player1TickOutput.spawnedEffects.forEach(effectState => {
-        state.effectStates.push(effectState);
-    });
-    player2TickOutput.spawnedEffects.forEach(effectState => {
-        state.effectStates.push(effectState);
-    });
+    // Push the effects the player ticks created to the game effect state
+    Array.prototype.push.apply(state.effectStates, player1TickOutput.spawnedEffects);
+    Array.prototype.push.apply(state.effectStates, player2TickOutput.spawnedEffects);
 
     // Get any dash collisions and go to the next round
     // also creates any needed effects
@@ -176,47 +174,8 @@ const tickMidroundGameState = (state, playerStateInfo) => {
     }
 
     // Add any capture points
-    const topCapturePlayer = getPlayersOnTopCapturePoint(playerStateInfo.player1State, playerStateInfo.player2State);
-    if (topCapturePlayer === 0)
-        state.topCapture -= 0.25;
-    else if (topCapturePlayer !== 3)
-        state.topCapture += 1;
-
-    if (state.topCapture < 0)
-        state.topCapture = 0;
-
-    if (state.topCapture > topCaptureMax) {
-        if (topCapturePlayer === 1)
-            state.player1Score += 1;
-        else if (topCapturePlayer === 2)
-            state.player2Score += 1;
-        state.topCapture = 0;
-        state.effectStates.push(new PointEffectState(levelWidth / 2, 255, 30, 60));
-        state.textAnimTime = 0.0;
-        state.roundWinner = topCapturePlayer;
-    }
-
-    const bottomCapturePlayer = getPlayersOnBottomCapturePoint(playerStateInfo.player1State, playerStateInfo.player2State)
-    if (bottomCapturePlayer === 0)
-        state.bottomCapture -= 0.25;
-    else if (bottomCapturePlayer !== 3)
-        state.bottomCapture += 1;
-
-    if (state.bottomCapture < 0)
-        state.bottomCapture = 0;
-
-    if (state.bottomCapture > bottomCaptureMax) {
-        if (bottomCapturePlayer === 1) {
-            state.player1Score += 1;
-        }
-        else if (bottomCapturePlayer === 2) {
-            state.player2Score += 1;
-        }
-        state.bottomCapture = 0;
-        state.effectStates.push(new PointEffectState(levelWidth / 2, 705, 30, 60));
-        state.textAnimTime = 0.0;
-        state.roundWinner = bottomCapturePlayer;
-    }
+    tickCaptureState(state.topCaptureState, playerStateInfo.player1State, playerStateInfo.player2State, onScore, state);
+    tickCaptureState(state.bottomCaptureState, playerStateInfo.player1State, playerStateInfo.player2State, onScore, state);
 
     if (state.player1Score >= maxPoints || state.player2Score >= maxPoints) {
         playerStateInfo.player1State = createPlayerState(player1SpawnX, -100, true);
@@ -225,6 +184,18 @@ const tickMidroundGameState = (state, playerStateInfo) => {
         state.roundState = roundTypes.ENDGAME;
         state.textAnimTime = 0.0;
     }
+}
+
+const onScore = (scoringPlayer, args) => {
+    const state = args[0];
+    if (scoringPlayer === 1)
+        state.player1Score += 1;
+    else if (scoringPlayer === 2)
+        state.player2Score += 1;
+
+    state.effectStates.push(new PointEffectState(levelWidth / 2, 255, 30, 60));
+    state.textAnimTime = 0.0;
+    state.roundWinner = scoringPlayer;
 }
 
 const tickEndRoundGameState = (state, playerStateInfo) => {
@@ -283,8 +254,8 @@ const drawGameState = (prevState, state, ctx, drawInterp) => {
     })
 
     // Draw the capture indicators under the platform
-    drawCaptureIndicator(ctx, levelWidth / 2, 255, 50, state.topCapture / topCaptureMax);
-    drawCaptureIndicator(ctx, levelWidth / 2, 705, 50, state.bottomCapture / bottomCaptureMax);
+    drawCaptureState(ctx, state.topCaptureState, 100, 75);
+    drawCaptureState(ctx, state.bottomCaptureState, 100, 75);
 
     // Draw the platforms
     platforms.forEach(platform => {
@@ -323,68 +294,6 @@ const drawTopText = (ctx, text, textAnimTime) => {
     const easeTime = 1 - Math.pow(1 - textAnimTime, 4);
     ctx.fillStyle = 'rgba(230, 230, 230, ' + textAnimTime.toString() + ')';
     ctx.fillText(text, levelWidth / 2, 80 - (-100 + easeTime * 100));
-}
-
-const drawCaptureIndicator = (ctx, x, y, radius, amount) => {
-    // Draw the capture point shadow
-    ctx.fillStyle = shadowColor;
-    ctx.beginPath();
-    ctx.lineTo(x + radius * Math.sin((0) * Math.PI / 180), (y + 5) + radius * Math.cos((0) * Math.PI / 180));
-    ctx.lineTo(x + radius * 2 * Math.sin((120) * Math.PI / 180), (y + 5) + radius * Math.cos((120) * Math.PI / 180));
-    ctx.lineTo(x + radius * 2 * Math.sin((240) * Math.PI / 180), (y + 5) + radius * Math.cos((240) * Math.PI / 180));
-    ctx.fill();
-
-    // Draw the outline
-    ctx.fillStyle = 'rgb(30, 30, 30)';
-    ctx.beginPath();
-    ctx.lineTo(x + radius * Math.sin((0) * Math.PI / 180), y + radius * Math.cos((0) * Math.PI / 180));
-    ctx.lineTo(x + radius * 2 * Math.sin((120) * Math.PI / 180), y + radius * Math.cos((120) * Math.PI / 180));
-    ctx.lineTo(x + radius * 2 * Math.sin((240) * Math.PI / 180), y + radius * Math.cos((240) * Math.PI / 180));
-    ctx.fill();
-
-    // Draw the amount indicator
-    if (amount <= 0)
-        return;
-    ctx.strokeStyle = 'gray';
-    ctx.beginPath(); 
-    const easeRadius = radius * (1 - Math.pow(1 - amount, 2));
-    ctx.lineTo(x + easeRadius * Math.sin((0) * Math.PI / 180), y + easeRadius * Math.cos((0) * Math.PI / 180));
-    ctx.lineTo(x + easeRadius * 2 * Math.sin((120) * Math.PI / 180), y + easeRadius * Math.cos((120) * Math.PI / 180));
-    ctx.lineTo(x + easeRadius * 2 * Math.sin((240) * Math.PI / 180), y + easeRadius * Math.cos((240) * Math.PI / 180));
-    ctx.closePath();
-    ctx.stroke();
-}
-
-const playerIsStandingOn = (playerState, height, x0, x1) => {
-    return (playerState.y + playerHeight === height && playerState.x + playerWidth > x0 && playerState.x < x1);
-}
-
-const getPlayersOnTopCapturePoint = (player1State, player2State) => {
-    const player1Standing = playerIsStandingOn(player1State, levelHeight /4, levelWidth / 2 - 150, levelWidth / 2 + 150);
-    const player2Standing = playerIsStandingOn(player2State, levelHeight /4, levelWidth / 2 - 150, levelWidth / 2 + 150);
-
-    if (player1Standing && player2Standing)
-        return 3;
-    else if (player1Standing)
-        return 1;
-    else if (player2Standing)
-        return 2;
-    else 
-        return 0;
-}
-
-const getPlayersOnBottomCapturePoint = (player1State, player2State) => {
-    const player1Standing = playerIsStandingOn(player1State, levelHeight / 2 + levelHeight / 4, levelWidth / 2 - 250, levelWidth / 2 + 250);
-    const player2Standing = playerIsStandingOn(player2State, levelHeight / 2 + levelHeight / 4, levelWidth / 2 - 250, levelWidth / 2 + 250);
-
-    if (player1Standing && player2Standing)
-        return 3;
-    else if (player1Standing)
-        return 1;
-    else if (player2Standing)
-        return 2;
-    else 
-        return 0;
 }
 
 export { createGameState, tickGameState, drawGameState, player1SpawnX, player2SpawnX };

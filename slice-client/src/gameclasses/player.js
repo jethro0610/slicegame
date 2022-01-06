@@ -322,4 +322,5 @@ export {
     tickPlayerState, 
     drawPlayerFromState, 
     doDashCollisions,
-    tickEndRoundPlayerState };
+    tickEndRoundPlayerState 
+};
