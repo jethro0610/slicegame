@@ -1,3 +1,7 @@
+// Load the enviornment variables
+if (process.env.NODE_ENV !== 'production')
+    require('dotenv').config({path:'./.env.' + process.env.NODE_ENV});
+
 const express = require('express');
 const cors = require('cors');
 const socketIO = require('socket.io');
@@ -19,6 +23,14 @@ const http = require('http').createServer(app);
 const io = socketIO(http, {
     cors: corsOptions
 });
+
+// Route the frontend
+if (process.env.NODE_ENV !== 'development') {
+    app.use(express.static('../slice-client/build'));
+    app.get('/*', function(req,res) {
+        res.sendFile(path.join(__dirname, '../slice-client/build', 'index.html'));
+    });
+}
 
 // Listen on port
 http.listen(port, () => {
