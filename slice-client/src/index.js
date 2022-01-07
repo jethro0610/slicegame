@@ -5,6 +5,8 @@ import App from './App';
 import { Provider } from 'react-redux';
 import store from './redux/store/store';
 import reportWebVitals from './reportWebVitals';
+import './matchmaking'
+require('dotenv').config({path:'../.env.' + process.env.NODE_ENV});
 
 ReactDOM.render(
   <Provider store = {store}>

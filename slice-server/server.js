@@ -4,7 +4,7 @@ if (process.env.NODE_ENV !== 'production')
 
 const express = require('express');
 const cors = require('cors');
-const socketIO = require('socket.io');
+const matchmaking = require('./matchmaking')
 
 // Set CORS options
 const corsOptions = {
@@ -19,10 +19,8 @@ app.use(cors(corsOptions));
 app.use(express.json());
 const http = require('http').createServer(app);
 
-// Start socket.io
-const io = socketIO(http, {
-    cors: corsOptions
-});
+// Start SocketIO in matchmaking
+const io = matchmaking.initSocketIO(http, corsOptions);
 
 // Route the frontend
 if (process.env.NODE_ENV !== 'development') {
