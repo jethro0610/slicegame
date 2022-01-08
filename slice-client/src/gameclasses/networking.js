@@ -1,7 +1,12 @@
 import Peer from 'peerjs';
 import { startGame, stopGame, gameWorld } from './gameWorld';
+import { connectToMatchmaking } from '../matchmaking';
 
-let client = new Peer();
+const client = new Peer({
+    host: 'localhost',
+    port: 5000,
+    path: '/matchmaking'
+});
 let remote = null;
 let isHost = false;
 
@@ -19,6 +24,7 @@ setInterval(() => {
 
 client.on('open', (id) => {
     console.log('Opened PeerJS connection with ID: ' + id);
+    connectToMatchmaking(id, connectToPeer); // Connect to the matchmaking server once a peer id is assigned
 });
 
 client.on('connection', (conn) => {
@@ -78,8 +84,12 @@ const disconnect = () => {
     remote.close();
 }
 
-window.connectToPeer = (id) => {
+const connectToPeer = (id) => {
     setRemote(client.connect(id));
+}
+
+window.connectToPeer = (id) => {
+    connectToPeer();
 }
 
 window.disconnectFromRemote = () => {

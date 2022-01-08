@@ -31,6 +31,7 @@ if (process.env.NODE_ENV !== 'development') {
 }
 
 // Listen on port
-http.listen(port, () => {
+const server = http.listen(port, () => {
     console.log(`Server started on port: ${port}`);
 });
+app.use(matchmaking.initPeerServer(server));
