@@ -34,7 +34,7 @@ const initSocketIO = (http, corsOptions) => {
             idSocket.delete(socket.peerId);
             searchingClients.delete(socket);
         });
-        console.log(socket.request.client._peername);
+        console.log(socket.request.headers);
     })
 
     return io;
