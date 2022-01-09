@@ -34,8 +34,7 @@ const initSocketIO = (http, corsOptions) => {
             idSocket.delete(socket.peerId);
             searchingClients.delete(socket);
         });
-        console.log(socket.request.connection.remoteAddress);
-        console.log(geoip.lookup(socket.request.connection.remoteAddress));
+        console.log(socket.request.client._peername);
     })
 
     return io;
