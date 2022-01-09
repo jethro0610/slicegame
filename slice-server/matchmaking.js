@@ -1,5 +1,6 @@
 const socketIO = require('socket.io');
 const geoip = require('geoip-lite');
+const haversine = require('haversine-distance');
 const { ExpressPeerServer } = require ('peer');
 let io;
 let peerServer;
@@ -34,11 +35,25 @@ const initSocketIO = (http, corsOptions) => {
             idSocket.delete(socket.peerId);
             searchingClients.delete(socket);
         });
-        console.log(socket.request.connection.remoteAddress);
-        console.log(geoip.lookup(socket.request.connection.remoteAddress));
+        const socketIP = socket.request.headers['x-forwarded-for'];
+        if (socketIP != undefined) {
+            const geoipInfo = geoip.lookup(socketIP);
+            if (geoipInfo != undefined) {
+                socket.location = geoipInfo.ll;
+            }
+        }
+
+        console.log('Client connected at: ' + socket.location);
     })
 
     return io;
+}
+
+const getDistance = (socket1, socket2) => {
+    if (socket1.location == undefined || socket2.location == undefined)
+        return Infinity;
+
+    return haversine(socket1.location, socket2.location);
 }
 
 const initPeerServer = (server) => {
@@ -55,6 +70,7 @@ const assignMatch = () => {
         if (client !== clientToAssign) {
             foundClient = client;
             clientToAssign.emit('match-found', foundClient.peerId);
+            console.log(getDistance(clientToAssign, foundClient));
             break;
         }
     }
