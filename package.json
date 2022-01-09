@@ -2,6 +2,7 @@
     "name": "slice-game",
     "version": "1.0.0",
     "scripts": {
-      "postintall": "npm install --prefix slice-server && npm install --prefix slice-client"
+      "start": "cd slice-server && cross-env NODE_ENV=production server.js",
+      "heroku-postbuild": "cd slice-server && npm install && pushd && cd slice-client && npm install && npm run build"
     }
   }
