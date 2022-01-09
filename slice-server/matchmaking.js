@@ -34,7 +34,9 @@ const initSocketIO = (http, corsOptions) => {
             idSocket.delete(socket.peerId);
             searchingClients.delete(socket);
         });
-        console.log(socket.request.headers);
+        const socketIP = socket.request.headers['X-Forwarded-For'];
+        console.log(socketIP);
+        console.log(geoip.lookup(socketIP));
     })
 
     return io;
