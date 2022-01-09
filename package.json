@@ -3,6 +3,6 @@
     "version": "1.0.0",
     "scripts": {
       "start": "cd slice-server && cross-env NODE_ENV=production server.js",
-      "heroku-postbuild": "cd slice-server && npm install && pushd && cd slice-client && npm install && npm run build"
+      "heroku-postbuild": "cd slice-server && npm install && cd - && cd slice-client && npm install && npm run build"
     }
   }
