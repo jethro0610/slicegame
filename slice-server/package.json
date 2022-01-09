@@ -18,7 +18,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "cross-env NODE_ENV=development nodemon server.js",
     "stage": "cross-env NODE_ENV=staging nodemon server.js",
-    "start": "node server.js"
+    "start": "cross-env NODE_ENV=production node server.js"
   },
   "author": "Jethro Immanuel Peralta",
   "license": "ISC"
