@@ -3,8 +3,8 @@ import { startGame, stopGame, gameWorld } from './gameWorld';
 import { connectToMatchmaking } from '../matchmaking';
 
 const client = new Peer({
-    host: 'localhost',
-    port: 5000,
+    host: process.env.NODE_ENV === 'development' ? process.env.REACT_APP_BACKEND_HOST : window.location.hostname,
+    port: process.env.NODE_ENV === 'development' ? process.env.REACT_APP_BACKEND_PORT: window.location.port,
     path: '/matchmaking'
 });
 let remote = null;

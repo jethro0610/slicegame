@@ -5,6 +5,7 @@ if (process.env.NODE_ENV !== 'production')
 const express = require('express');
 const cors = require('cors');
 const matchmaking = require('./matchmaking')
+const path = require('path');
 
 // Set CORS options
 const corsOptions = {
@@ -22,16 +23,19 @@ const http = require('http').createServer(app);
 // Start SocketIO in matchmaking
 const io = matchmaking.initSocketIO(http, corsOptions);
 
+// Listen on port
+const server = http.listen(port, () => {
+    console.log(`Server started on port: ${port}`);
+});
+
+// Create the PeerServer
+app.use(matchmaking.initPeerServer(server));
+
 // Route the frontend
+// Make sure this is the last route otherwise the other routes will be ignored
 if (process.env.NODE_ENV !== 'development') {
     app.use(express.static('../slice-client/build'));
     app.get('/*', function(req,res) {
         res.sendFile(path.join(__dirname, '../slice-client/build', 'index.html'));
     });
 }
-
-// Listen on port
-const server = http.listen(port, () => {
-    console.log(`Server started on port: ${port}`);
-});
-app.use(matchmaking.initPeerServer(server));

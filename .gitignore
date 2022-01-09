@@ -78,3 +78,4 @@ TODO
 slice-client/.env.development
 slice-client/.env.production
 slice-server/.env.development
+slice-server/.env.staging

@@ -8,6 +8,7 @@
     "cross-env": "^7.0.3",
     "dotenv": "^10.0.0",
     "express": "^4.17.2",
+    "geoip-lite": "^1.4.2",
     "nodemon": "^2.0.15",
     "peer": "^0.6.1",
     "socket.io": "^4.4.0"
@@ -16,6 +17,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "cross-env NODE_ENV=development nodemon server.js",
+    "stage": "cross-env NODE_ENV=staging nodemon server.js",
     "start": "node server.js"
   },
   "author": "Jethro Immanuel Peralta",
