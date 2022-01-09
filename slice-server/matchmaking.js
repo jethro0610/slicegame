@@ -1,4 +1,5 @@
 const socketIO = require('socket.io');
+const geoip = require('geoip-lite');
 const { ExpressPeerServer } = require ('peer');
 let io;
 let peerServer;
@@ -33,6 +34,8 @@ const initSocketIO = (http, corsOptions) => {
             idSocket.delete(socket.peerId);
             searchingClients.delete(socket);
         });
+        console.log(socket.request.connection.remoteAddress);
+        console.log(geoip.lookup(socket.request.connection.remoteAddress));
     })
 
     return io;
