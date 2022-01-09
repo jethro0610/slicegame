@@ -1,4 +1,5 @@
 const socketIO = require('socket.io');
+const parse = require('parse-headers');
 const geoip = require('geoip-lite');
 const { ExpressPeerServer } = require ('peer');
 let io;
@@ -34,8 +35,8 @@ const initSocketIO = (http, corsOptions) => {
             idSocket.delete(socket.peerId);
             searchingClients.delete(socket);
         });
-        console.log(socket.request.headers);
-        const socketIP = socket.request.headers['x-forwarded-for'];
+        const requestHeaders = parse(requestHeaders)
+        const socketIP = requestHeaders['x-forwarded-for'];
         console.log(socketIP);
         console.log(geoip.lookup(socketIP));
     })
