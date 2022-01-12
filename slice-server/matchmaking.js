@@ -1,11 +1,13 @@
 const socketIO = require('socket.io');
 const geoip = require('geoip-lite');
+const lodash = require('lodash');
 const haversine = require('haversine-distance');
 const { ExpressPeerServer } = require ('peer');
 let io;
 let peerServer;
-const idSocket = new Map();
-const searchingClients = new Set();
+
+const searchingClients = [];
+const socketIds = new Set();
 
 const generateID = () => {
     return Math.random().toString(36);
@@ -19,22 +21,28 @@ const initSocketIO = (http, corsOptions) => {
 
     io.on('connection', (socket) => {
         socket.on('request-search', () => {
-            searchingClients.add(socket);
+            if (!searchingClients.includes(socket)) {
+                searchingClients.push(socket);
+                socket.searches = 0;
+            }
         });
 
         socket.on('client-id', (id) => {
-            if (!idSocket.has(id)) {
+            if (!socketIds.has(id)) {
                 // Assign the peer id to the associated socket
                 socket.peerId = id;
-                idSocket.set(id, socket);
+                socketIds.add(id)
             }
         });
 
         socket.on('disconnect', () => {
             // Remove the disconnecting id
-            idSocket.delete(socket.peerId);
-            searchingClients.delete(socket);
+            socketIds.delete(socket.peerId);
+            lodash.remove(searchingClients, (client) => {
+                return client === socket;
+            });
         });
+
         const socketIP = socket.request.headers['x-forwarded-for'];
         if (socketIP != undefined) {
             const geoipInfo = geoip.lookup(socketIP);
@@ -61,27 +69,35 @@ const initPeerServer = (server) => {
     return peerServer;
 }
 
-const assignMatch = () => {
-    const [clientToAssign] = searchingClients; // Assign a match to the first client that searched
-    let foundClient = undefined;
-    
-    // Connect to the next client that's also searching
-    for (var it = searchingClients.values(), client = null; client=it.next().value; ){
-        if (client !== clientToAssign) {
-            foundClient = client;
-            clientToAssign.emit('match-found', foundClient.peerId);
-            console.log(getDistance(clientToAssign, foundClient));
-            break;
-        }
+const assignMatch = (clientToAssign) => {
+    clientToAssign.searches += 1;
+
+    // Pick a random client to potentially match with
+    const foundClient = searchingClients[Math.floor(Math.random()*searchingClients.length)];
+    if (foundClient === clientToAssign)
+        return;
+
+    // Don't match if the distance is too far and the search hasn't been long
+    const distance = getDistance(clientToAssign, foundClient);
+     // Only do distance check if both clients have a distance, otherwise both will match
+    if (clientToAssign.location !== undefined && foundClient.location !== undefined) {
+        if (distance > 804672 && clientToAssign.searches < 20)
+            return;
     }
 
-    // Remove the clients from the search if a match was found
-    if (foundClient !== undefined) {
-        searchingClients.delete(clientToAssign);
-        searchingClients.delete(foundClient);
+    // Send the found match and remove both clients from the search
+    clientToAssign.emit('match-found', foundClient.peerId);
+    lodash.remove(searchingClients, client => client == clientToAssign);
+    lodash.remove(searchingClients, client => client == foundClient);
+    console.log(getDistance(clientToAssign, foundClient));
+}
+
+const assignMatches = () => {
+    for (let i = 0; i < searchingClients.length; i++) {
+        assignMatch(searchingClients[i]);
     }
 }
 
-setInterval(assignMatch, 500);
+setInterval(assignMatches, 16);
 
 module.exports = { initSocketIO, initPeerServer }
