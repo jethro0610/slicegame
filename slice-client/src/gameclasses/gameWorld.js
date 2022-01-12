@@ -67,8 +67,10 @@ class GameWorld {
             drawGameState(prevState, state, ctx, drawInterp)
         }
 
-        if (destroyOnNextDraw)
+        if (destroyOnNextDraw) {
             gameWorld = null;
+            destroyOnNextDraw = false;
+        }
     }
 
     doTicks = () => {
