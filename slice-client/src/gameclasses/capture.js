@@ -47,7 +47,7 @@ const tickCaptureState = (captureState, player1State, player2State, onScore, ...
 
 const drawCaptureState = (ctx, captureState, width, height) => {
     // Draw the capture point shadow
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
     ctx.beginPath();
     ctx.lineTo(captureState.x - width, captureState.y + 6);
     ctx.lineTo(captureState.x + width, captureState.y + 6);
@@ -55,7 +55,7 @@ const drawCaptureState = (ctx, captureState, width, height) => {
     ctx.fill();
 
     // Draw the outline
-    ctx.fillStyle = 'rgb(30, 30, 30)';
+    ctx.fillStyle = '#FFECD4';
     ctx.beginPath();
     ctx.lineTo(captureState.x - width, captureState.y + 1);
     ctx.lineTo(captureState.x + width, captureState.y + 1);
@@ -66,15 +66,14 @@ const drawCaptureState = (ctx, captureState, width, height) => {
     const amount = captureState.points / captureState.maxPoints
     if (amount <= 0)
         return;
-    ctx.strokeStyle = 'gray';
+    ctx.fillStyle = '#B5E0F7';
     ctx.beginPath(); 
     const easeAmount = (1 - Math.pow(1 - amount, 2));
     const startY = captureState.y + height / 2;
     ctx.lineTo(captureState.x - width * easeAmount, startY - (height / 2) * easeAmount + 1);
     ctx.lineTo(captureState.x + width * easeAmount, startY - (height / 2) * easeAmount + 1);
     ctx.lineTo(captureState.x, startY + (height / 2) * easeAmount + 1);
-    ctx.closePath();
-    ctx.stroke();
+    ctx.fill();
 }
 
 export { createCaptureState, tickCaptureState, drawCaptureState };

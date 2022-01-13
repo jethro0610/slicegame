@@ -57,7 +57,7 @@ class GameWorld {
 
     draw = ctx => {
         ctx.clearRect(0, 0, levelWidth, levelHeight);
-        ctx.fillStyle = '#f7dab5'
+        ctx.fillStyle = '#F7DAB5'
         ctx.fillRect(0, 0, levelWidth, levelHeight);
         const state = this.states.get(this.tickCount);
         const prevState = this.states.get(this.tickCount - 1);

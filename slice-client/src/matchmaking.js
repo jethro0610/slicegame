@@ -25,4 +25,4 @@ window.requestSearch = () => {
     requestSearch();
 }
 
-export { connectToMatchmaking };
+export { connectToMatchmaking, requestSearch };

@@ -25,7 +25,7 @@ const createGameState = () => {
         player1State: createPlayerState(player1SpawnX, -100, true), 
         player2State: createPlayerState(player2SpawnX, -100, false), 
         topCaptureState: createCaptureState(60, levelWidth / 2, levelHeight / 4, 300),
-        bottomCaptureState: createCaptureState(90, levelWidth / 2, levelHeight / 2 + levelHeight / 4, 300),
+        bottomCaptureState: createCaptureState(90, levelWidth / 2, levelHeight / 2 + levelHeight / 4, 500),
         roundState: roundTypes.STARTGAME,
         roundTimer: 0,
         goTimer: 0, 
@@ -254,8 +254,8 @@ const drawGameState = (prevState, state, ctx, drawInterp) => {
     })
 
     // Draw the capture indicators under the platform
-    //drawCaptureState(ctx, state.topCaptureState, 100, 75);
-    //drawCaptureState(ctx, state.bottomCaptureState, 100, 75);
+    drawCaptureState(ctx, state.topCaptureState, 100, 75);
+    drawCaptureState(ctx, state.bottomCaptureState, 100, 75);
 
     // Draw the platforms
     platforms.forEach(platform => {
