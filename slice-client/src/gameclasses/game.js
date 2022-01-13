@@ -284,6 +284,10 @@ const drawText = (ctx, text, textAnimTime) => {
     ctx.font = '125px Work Sans';
     ctx.textAlign ='center';
     const easeTime = 1 - Math.pow(1 - textAnimTime, 4);
+
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+    ctx.fillText(text, levelWidth / 2, (levelHeight / 2) + 50 - (-100 + easeTime * 100) + 3);
+
     ctx.fillStyle = 'rgba(255, 255, 255, ' + textAnimTime.toString() + ')';
     ctx.fillText(text, levelWidth / 2, (levelHeight / 2) + 50 - (-100 + easeTime * 100));
 }
@@ -292,6 +296,10 @@ const drawTopText = (ctx, text, textAnimTime) => {
     ctx.font = '75px Work Sans';
     ctx.textAlign ='center';
     const easeTime = 1 - Math.pow(1 - textAnimTime, 4);
+
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)' 
+    ctx.fillText(text, levelWidth / 2, 80 - (-100 + easeTime * 100) + 3);
+
     ctx.fillStyle = 'rgba(255, 255, 255, ' + textAnimTime.toString() + ')';
     ctx.fillText(text, levelWidth / 2, 80 - (-100 + easeTime * 100));
 }
