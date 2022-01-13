@@ -193,7 +193,7 @@ class CaptureEffectState {
         for (var i = 0; i < this.durations.length; i++) {
             const opacity = 0.5 - (this.durations[i] / this.duration) * 0.5;
             const radius = 10 * opacity
-            ctx.fillStyle = 'rgba(255, 255, 255, ' + opacity.toString() + ')';
+            ctx.fillStyle = 'rgba(0, 0, 0, ' + opacity.toString() + ')';
             ctx.beginPath();
             ctx.lineTo(this.x[i] + radius * Math.sin((0 + this.rot[i]) * Math.PI / 180), this.y[i] + radius * Math.cos((0 + this.rot[i]) * Math.PI / 180))
             ctx.lineTo(this.x[i] + radius * Math.sin((120 + this.rot[i]) * Math.PI / 180), this.y[i] + radius * Math.cos((120 + this.rot[i]) * Math.PI / 180))
@@ -225,7 +225,7 @@ class PointEffectState {
     
     draw = (ctx) => {
         const opacity = 1.0 - (this.curTime / this.duration);
-        ctx.strokeStyle = 'rgba(255, 255, 255, '+ opacity.toString() + ')';
+        ctx.strokeStyle = 'rgba(91, 142, 171, '+ opacity.toString() + ')';
         ctx.beginPath();
         ctx.lineTo(this.x, this.y + this.size)
         ctx.lineTo(this.x + this.size, this.y)

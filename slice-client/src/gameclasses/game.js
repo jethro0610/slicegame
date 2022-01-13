@@ -233,9 +233,9 @@ const tickEndGameState = (state) => {
     }
 }
 
-const playerColor = 'rgb(180, 180, 180)'
-const platformColor = 'rgb(60, 60, 60)'
-const shadowColor = 'rgba(0, 0, 0, 0.5)'
+const playerColor = '#5B8EAB'
+const platformColor = '#AB8F6C'
+const shadowColor = 'rgba(0, 0, 0, 0.05)'
 const drawGameState = (prevState, state, ctx, drawInterp) => {
     // Don't interpolate if at the beginning of round or end of game (this prevents teleport trailing)
     if ((state.roundState === roundTypes.STARTROUND && state.roundTimer < 10) || state.roundState === roundTypes.ENDGAME)
@@ -254,8 +254,8 @@ const drawGameState = (prevState, state, ctx, drawInterp) => {
     })
 
     // Draw the capture indicators under the platform
-    drawCaptureState(ctx, state.topCaptureState, 100, 75);
-    drawCaptureState(ctx, state.bottomCaptureState, 100, 75);
+    //drawCaptureState(ctx, state.topCaptureState, 100, 75);
+    //drawCaptureState(ctx, state.bottomCaptureState, 100, 75);
 
     // Draw the platforms
     platforms.forEach(platform => {
@@ -284,7 +284,7 @@ const drawText = (ctx, text, textAnimTime) => {
     ctx.font = '125px Work Sans';
     ctx.textAlign ='center';
     const easeTime = 1 - Math.pow(1 - textAnimTime, 4);
-    ctx.fillStyle = 'rgba(230, 230, 230, ' + textAnimTime.toString() + ')';
+    ctx.fillStyle = 'rgba(255, 255, 255, ' + textAnimTime.toString() + ')';
     ctx.fillText(text, levelWidth / 2, (levelHeight / 2) + 50 - (-100 + easeTime * 100));
 }
 
@@ -292,7 +292,7 @@ const drawTopText = (ctx, text, textAnimTime) => {
     ctx.font = '75px Work Sans';
     ctx.textAlign ='center';
     const easeTime = 1 - Math.pow(1 - textAnimTime, 4);
-    ctx.fillStyle = 'rgba(230, 230, 230, ' + textAnimTime.toString() + ')';
+    ctx.fillStyle = 'rgba(255, 255, 255, ' + textAnimTime.toString() + ')';
     ctx.fillText(text, levelWidth / 2, 80 - (-100 + easeTime * 100));
 }
 

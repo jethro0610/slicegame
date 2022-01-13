@@ -12,7 +12,7 @@ const mapStateToProps =  state => {
 }
 
 const ConnectApp = ({gameStarted}) => {
-  document.body.style.backgroundColor = '#1a1a1a'
+  document.body.style.backgroundColor = '#FFECD4'
   const gameCanvas = gameStarted ? <GameCanvas/> : null;
 
   return (
