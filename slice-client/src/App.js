@@ -1,6 +1,8 @@
 import './App.css';
 import GameCanvas from './components/game/gameCanvas';
+import StartScreen from './components/startScreen';
 import { connect } from 'react-redux';
+import useEffect from 'react';
 import './gameclasses/networking';
 
 const mapStateToProps =  state => {
@@ -10,10 +12,12 @@ const mapStateToProps =  state => {
 }
 
 const ConnectApp = ({gameStarted}) => {
+  document.body.style.backgroundColor = '#1a1a1a'
   const gameCanvas = gameStarted ? <GameCanvas/> : null;
 
   return (
     <div>
+      <StartScreen></StartScreen>
       {gameCanvas}
     </div>
   );

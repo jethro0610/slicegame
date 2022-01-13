@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { gameWorld } from '../../gameclasses/gameWorld';
-import './css/gameCanvas.css'
+import '../css/gameCanvas.css'
 
 const GameCanvas = props => {
     // Reference to canvas
@@ -9,7 +9,7 @@ const GameCanvas = props => {
         // Get the actual canvas reference and the context of the canvas
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
-
+        ctx.scale(2.0, 2.0);
         const draw = () => {
             if(gameWorld === null)
                 return;
@@ -22,7 +22,7 @@ const GameCanvas = props => {
     }, [])
 
     // Return the canvas DOM element
-    return <canvas ref ={canvasRef} id='gamecanvas' width={gameWorld.width} height={gameWorld.height}/>
+    return <canvas ref ={canvasRef} id='gamecanvas' width={gameWorld.width * 2.0} height={gameWorld.height * 2.0}/>
 }
 
 export default GameCanvas;
