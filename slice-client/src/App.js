@@ -1,6 +1,7 @@
 import './App.css';
 import GameCanvas from './components/game/gameCanvas';
 import StartScreen from './components/startScreen';
+import SearchScreen from './components/searchScreen';
 import { connect } from 'react-redux';
 import './gameclasses/networking';
 
@@ -17,8 +18,7 @@ const ConnectApp = ({gameStarted}) => {
 
   return (
     <div>
-      {startScreen}
-      {gameCanvas}
+      <SearchScreen/>
     </div>
   );
 }

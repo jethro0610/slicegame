@@ -1,0 +1,74 @@
+.searchScreenBody {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+
+    font-family: 'Work Sans';
+    color: #5B8EAB;
+    font-size: 50px;
+}
+
+.loader {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin: 1%;
+}
+
+.l1 { 
+    background-color: #B5E0F7;
+    width: 20px;
+    height: 20px;
+    margin-left: 50px;
+    margin-right: 50px;
+    transform: rotateY(0deg) rotate(45deg);
+
+    animation: spin1 2s ease infinite;
+}
+
+.l2 {
+    background-color: #B5E0F7;
+    width: 20px;
+    height: 20px;
+    margin-left: 50px;
+    margin-right: 50px;
+    transform: rotateY(0deg) rotate(45deg);
+
+    animation: spin2 2s ease infinite;
+}
+
+.l3 {
+    background-color: #B5E0F7;
+    width: 20px;
+    height: 20px;
+    margin-left: 50px;
+    margin-right: 50px;
+    transform: rotateY(0deg) rotate(45deg);
+
+    animation: spin3 2s ease infinite;
+}
+
+@keyframes spin1 {
+    0% { transform: scale(1.0) rotate(45deg) }
+    25% { transform: scale(1.5) rotate(45deg) }
+    50% { transform: scale(1.0) rotate(45deg) }
+}
+
+@keyframes spin2 {
+    0% { transform: scale(1.0) rotate(45deg)  }
+    25% { transform: scale(1.0) rotate(45deg)  }
+    50% { transform: scale(1.5) rotate(45deg) }
+    75% { transform: scale(1.0) rotate(45deg) }
+}
+
+@keyframes spin3 {
+    0% { transform: scale(1.0) rotate(45deg)  }
+    50% { transform: scale(1.0) rotate(45deg)  }
+    75% { transform: scale(1.5) rotate(45deg) }
+    100% { transform: scale(1.00) rotate(45deg)  }
+}
