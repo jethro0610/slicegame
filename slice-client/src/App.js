@@ -7,18 +7,23 @@ import './gameclasses/networking';
 
 const mapStateToProps =  state => {
   return {
-    gameStarted: state.gameStarted
+    gameStarted: state.gameStarted,
+    searching: state.searching
   }
 }
 
-const ConnectApp = ({gameStarted}) => {
+const ConnectApp = ({gameStarted, searching}) => {
   document.body.style.backgroundColor = '#FFECD4'
-  const startScreen = gameStarted ? null : <StartScreen/>;
+
+  const startScreen = !gameStarted && !searching ? <StartScreen/> : null;
+  const searchScreen = !gameStarted && searching ? <SearchScreen/> : null;
   const gameCanvas = gameStarted ? <GameCanvas/> : null;
 
   return (
     <div>
-      <SearchScreen/>
+      { startScreen }
+      { searchScreen }
+      { gameCanvas }
     </div>
   );
 }

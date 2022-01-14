@@ -6,7 +6,7 @@ export const setSearching = (searching) => {
 
 export const searchingReducer = (state = initialState, action) => {
     switch (action.type) {
-        case 'SET_STARTED':
+        case 'SET_SEARCHING':
             return action.searching;
 
         default:

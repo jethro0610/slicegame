@@ -1,4 +1,6 @@
 import io from 'socket.io-client'
+import { setSearching } from './redux/reducers/searching'
+import store from './redux/store/store'
 let socket;
 
 const connectToMatchmaking = (id, onConnectionFound) => {
@@ -12,6 +14,14 @@ const connectToMatchmaking = (id, onConnectionFound) => {
 
     socket.on('match-found', (opponentId) => {
         onConnectionFound(opponentId);
+    })
+
+    socket.on('confirm-search', () => {
+        store.dispatch(setSearching(true));
+    })
+
+    socket.on('stop-search', () => {
+        store.dispatch(setSearching(false));
     })
 
     socket.emit('client-id', id);

@@ -24,6 +24,7 @@ const initSocketIO = (http, corsOptions) => {
             if (!searchingClients.includes(socket)) {
                 searchingClients.push(socket);
                 socket.searches = 0;
+                socket.emit('confirm-search');
             }
         });
 
@@ -89,7 +90,8 @@ const assignMatch = (clientToAssign) => {
     clientToAssign.emit('match-found', foundClient.peerId);
     lodash.remove(searchingClients, client => client == clientToAssign);
     lodash.remove(searchingClients, client => client == foundClient);
-    console.log(getDistance(clientToAssign, foundClient));
+    clientToAssign.emit('stop-search');
+    foundClient.emit('stop-search');
 }
 
 const assignMatches = () => {
