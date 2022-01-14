@@ -24,8 +24,8 @@ const createGameState = () => {
     return { 
         player1State: createPlayerState(player1SpawnX, -100, true), 
         player2State: createPlayerState(player2SpawnX, -100, false), 
-        topCaptureState: createCaptureState(60, levelWidth / 2, levelHeight / 4, 300),
-        bottomCaptureState: createCaptureState(90, levelWidth / 2, levelHeight / 2 + levelHeight / 4, 500),
+        topCaptureState: createCaptureState(120, levelWidth / 2, levelHeight / 4, 300),
+        bottomCaptureState: createCaptureState(200, levelWidth / 2, levelHeight / 2 + levelHeight / 4, 500),
         roundState: roundTypes.STARTGAME,
         roundTimer: 0,
         goTimer: 0, 
@@ -186,14 +186,14 @@ const tickMidroundGameState = (state, playerStateInfo) => {
     }
 }
 
-const onScore = (scoringPlayer, args) => {
+const onScore = (scoringPlayer, x, y, args) => {
     const state = args[0];
     if (scoringPlayer === 1)
         state.player1Score += 1;
     else if (scoringPlayer === 2)
         state.player2Score += 1;
 
-    state.effectStates.push(new PointEffectState(levelWidth / 2, 255, 30, 60));
+    state.effectStates.push(new PointEffectState(x, y, 30, 60));
     state.textAnimTime = 0.0;
     state.roundWinner = scoringPlayer;
 }
