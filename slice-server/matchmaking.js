@@ -28,6 +28,15 @@ const initSocketIO = (http, corsOptions) => {
             }
         });
 
+        socket.on('request-stop-search', () =>{
+            if (searchingClients.includes(socket)) {
+                lodash.remove(searchingClients, (client) => {
+                    return client === socket;
+                })
+                socket.emit('stop-search');
+            }
+        })
+
         socket.on('client-id', (id) => {
             if (!socketIds.has(id)) {
                 // Assign the peer id to the associated socket

@@ -1,4 +1,5 @@
 import React from 'react';
+import { requestStopSearch } from '../matchmaking';
 import './css/searchScreen.css'
 import './css/button.css'
 
@@ -12,7 +13,7 @@ const SearchScreen = props => {
                 <div class='l2'></div>
                 <div class='l3'></div>
             </div>
-            <button class='button cancelButton'>Cancel</button>
+            <button class='button cancelButton' onClick={requestStopSearch}>Cancel</button>
         </div>
 
     )

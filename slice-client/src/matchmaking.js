@@ -31,8 +31,12 @@ const requestSearch = () => {
     socket.emit('request-search');
 }
 
+const requestStopSearch = () => {
+    socket.emit('request-stop-search');
+}
+
 window.requestSearch = () => {
     requestSearch();
 }
 
-export { connectToMatchmaking, requestSearch };
+export { connectToMatchmaking, requestSearch, requestStopSearch };
