@@ -1,5 +1,13 @@
+#canvasContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+}
+
 #gamecanvas {
-    display: block;
+    display: flex;
     padding: 0;
     margin: auto;
 }

@@ -9,7 +9,6 @@ const GameCanvas = props => {
         // Get the actual canvas reference and the context of the canvas
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
-        ctx.scale(1.0, 1.0);
         const draw = () => {
             if(gameWorld === null)
                 return;
@@ -22,7 +21,11 @@ const GameCanvas = props => {
     }, [])
 
     // Return the canvas DOM element
-    return <canvas ref ={canvasRef} id='gamecanvas' width={gameWorld.width * 1.0} height={gameWorld.height * 1.0}/>
+    return (
+        <div id='canvasContainer'>
+            <canvas ref ={canvasRef} id='gamecanvas'/>
+        </div>
+    )
 }
 
 export default GameCanvas;

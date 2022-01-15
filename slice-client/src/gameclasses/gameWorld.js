@@ -56,6 +56,23 @@ class GameWorld {
     }
 
     draw = ctx => {
+        const calculatedWidth = window.innerHeight * (16 / 9);
+        const calculatedHeight = window.innerWidth * (9 / 16);
+        let canvasWidth;
+        let canvasHeight;
+        if (window.innerWidth <= calculatedWidth) {
+            canvasWidth = window.innerWidth;
+            canvasHeight = calculatedHeight;
+        }
+        else if (window.innerHeight <= calculatedHeight) {
+            canvasWidth = calculatedWidth;
+            canvasHeight = window.innerHeight;
+        }
+
+        ctx.canvas.width = canvasWidth;
+        ctx.canvas.height = canvasHeight;
+        ctx.scale(canvasWidth / levelWidth, canvasHeight / levelHeight);
+
         ctx.clearRect(0, 0, levelWidth, levelHeight);
         ctx.fillStyle = '#F7DAB5'
         ctx.fillRect(0, 0, levelWidth, levelHeight);
