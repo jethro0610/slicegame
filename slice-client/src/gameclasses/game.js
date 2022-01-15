@@ -10,7 +10,7 @@ const startGameLength = 180;
 const startMessageLength = 60;
 const player1SpawnX = 250;
 const player2SpawnX = levelWidth - player1SpawnX - playerWidth;
-const maxPoints = 10;
+const maxPoints = 25;
 
 const roundTypes = {
     STARTGAME: 0,
@@ -24,8 +24,8 @@ const createGameState = () => {
     return { 
         player1State: createPlayerState(player1SpawnX, -100, true), 
         player2State: createPlayerState(player2SpawnX, -100, false), 
-        topCaptureState: createCaptureState(120, levelWidth / 2, levelHeight / 4, 300),
-        bottomCaptureState: createCaptureState(200, levelWidth / 2, levelHeight / 2 + levelHeight / 4, 500),
+        topCaptureState: createCaptureState(200, levelWidth / 2, levelHeight / 4, 300),
+        bottomCaptureState: createCaptureState(120, levelWidth / 2, levelHeight / 2 + levelHeight / 4, 500),
         roundState: roundTypes.STARTGAME,
         roundTimer: 0,
         goTimer: 0, 
