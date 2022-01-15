@@ -10,6 +10,7 @@ let gameWorld = null;
 let destroyOnNextDraw = false; // This is required so the gameWorld is set to null after its done drawing
 const tickTime = (1/60.0) * 1000;
 const maxRollbackFrames = 300;
+const delay = 2
 
 const startGame = (remote, isHost) => {
     gameWorld = new GameWorld(levelWidth, levelHeight, remote, isHost);
@@ -56,6 +57,9 @@ class GameWorld {
     }
 
     draw = ctx => {
+        if (this.tickCount < delay)
+            return;
+
         const calculatedWidth = window.innerHeight * (16 / 9);
         const calculatedHeight = window.innerWidth * (9 / 16);
         let canvasWidth;
@@ -76,8 +80,8 @@ class GameWorld {
         ctx.clearRect(0, 0, levelWidth, levelHeight);
         ctx.fillStyle = '#F7DAB5'
         ctx.fillRect(0, 0, levelWidth, levelHeight);
-        const state = this.states.get(this.tickCount);
-        const prevState = this.states.get(this.tickCount - 1);
+        const state = this.states.get(this.tickCount - delay);
+        const prevState = this.states.get(this.tickCount - 1 - delay);
         const drawInterp = this.frameAccumulator / (tickTime + this.tickWaitTime);
 
         if (prevState !== undefined) {
