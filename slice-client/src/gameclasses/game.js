@@ -54,7 +54,7 @@ const tickEffectStates = (states) => {
     return newStates;
 }
 
-const tickGameState = (state, player1Input, prevPlayer1Input, player2Input, prevPlayer2Input) => {
+const tickGameState = (state, player1Input, prevPlayer1Input, player2Input, prevPlayer2Input, tickTime) => {
     // Create new states for player
     let playerStateInfo = {
         prevPlayer1Input,
@@ -89,10 +89,10 @@ const tickGameState = (state, player1Input, prevPlayer1Input, player2Input, prev
             break;
 
         case roundTypes.STARTROUND:
-            tickStartRoundGameState(state, playerStateInfo);
+            tickStartRoundGameState(state, playerStateInfo, tickTime);
             break;
         case roundTypes.FIGHT:
-            tickMidroundGameState(state, playerStateInfo);
+            tickMidroundGameState(state, playerStateInfo, tickTime);
             break;
         case roundTypes.ENDROUND:
             tickEndRoundGameState(state, playerStateInfo);
@@ -130,9 +130,9 @@ const tickStartGameState = (state, playerStateInfo) => {
     Array.prototype.push.apply(state.effectStates, player2TickOutput.spawnedEffects);
 }
 
-const tickStartRoundGameState = (state, playerStateInfo) => {
-    const player1TickOutput = tickStartRoundPlayerState(playerStateInfo.prevPlayer1State, playerStateInfo.player1State);
-    const player2TickOutput = tickStartRoundPlayerState(playerStateInfo.prevPlayer2State, playerStateInfo.player2State);
+const tickStartRoundGameState = (state, playerStateInfo, tickTime) => {
+    const player1TickOutput = tickStartRoundPlayerState(playerStateInfo.prevPlayer1State, playerStateInfo.player1State, tickTime);
+    const player2TickOutput = tickStartRoundPlayerState(playerStateInfo.prevPlayer2State, playerStateInfo.player2State, tickTime);
 
     // Push the effects the player ticks created to the game effect state
     state.effectStates.push.apply(player1TickOutput.spawnedEffects);
@@ -143,19 +143,21 @@ const tickStartRoundGameState = (state, playerStateInfo) => {
         state.roundState = roundTypes.FIGHT;
 }
 
-const tickMidroundGameState = (state, playerStateInfo) => {
+const tickMidroundGameState = (state, playerStateInfo, tickTime) => {
     // Tick the player states
     const player1TickOutput = tickPlayerState(
         playerStateInfo.prevPlayer1State, 
         playerStateInfo.player1State,
         playerStateInfo.prevPlayer1Input, 
-        playerStateInfo.player1Input);
+        playerStateInfo.player1Input,
+        tickTime);
 
     const player2TickOutput = tickPlayerState(
         playerStateInfo.prevPlayer2State, 
         playerStateInfo.player2State,
         playerStateInfo.prevPlayer2Input, 
-        playerStateInfo.player2Input);
+        playerStateInfo.player2Input,
+        tickTime);
     
     // Push the effects the player ticks created to the game effect state
     Array.prototype.push.apply(state.effectStates, player1TickOutput.spawnedEffects);

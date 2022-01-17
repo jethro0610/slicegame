@@ -216,7 +216,7 @@ class GameWorld {
 
     tickGameStateAtTick = (stateTick, player1Input, prevPlayer1Input, player2Input, prevPlayer2Input) => {
         const state = lodash.cloneDeep(this.states.get(stateTick - 1));
-        tickGameState(state, player1Input, prevPlayer1Input, player2Input, prevPlayer2Input)
+        tickGameState(state, player1Input, prevPlayer1Input, player2Input, prevPlayer2Input, stateTick);
         mapSetCapped(this.states, stateTick, state, maxRollbackFrames);
     }
 }

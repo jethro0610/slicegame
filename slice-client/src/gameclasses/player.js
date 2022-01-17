@@ -2,7 +2,7 @@ import Collider from "./collider";
 import { platforms, levelWidth, levelHeight } from "./level";
 import { DashEffectState, LandEffectState } from './effect'
 import VSprite from './vsprite'
-
+import { dashSound, heavySound, runSound } from "./sound";
 // Create the player VSprite and add animations
 const playerVSpriteJson = require('../vsprites/char.json')
 const playerVSprite = new VSprite(playerVSpriteJson)
@@ -46,10 +46,11 @@ const createPlayerState = (x = 0, y = 0, right = true) => {
         cooldown: false, 
         right, 
         animation: 'idle', 
-        animationFrame: -1};
+        animationFrame: -1
+    };
 }
 
-const tickStartRoundPlayerState = (prevState, state) => {
+const tickStartRoundPlayerState = (prevState, state, tickTime) => {
     const spawnedEffects = [];
 
     // Apply gravity and return whether or not the player is on the ground
@@ -61,8 +62,9 @@ const tickStartRoundPlayerState = (prevState, state) => {
     if(onGround) {
         state.animation = 'idle'
         if (prevState.velY > 0) {
-            const landEffect = new LandEffectState(state.x, state.y + playerHeight, 0)
-            spawnedEffects.push(landEffect)
+            const landEffect = new LandEffectState(state.x, state.y + playerHeight, 0);
+            spawnedEffects.push(landEffect);
+            heavySound.play(tickTime);
         }
     }
     else
@@ -71,7 +73,7 @@ const tickStartRoundPlayerState = (prevState, state) => {
     return { onGround, spawnedEffects }
 }
 
-const tickPlayerState = (prevState, state, prevInput, input) => {
+const tickPlayerState = (prevState, state, prevInput, input, tickTime) => {
     const spawnedEffects = []
     state.animation = 'idle'
     state.animationFrame = -1
@@ -86,8 +88,9 @@ const tickPlayerState = (prevState, state, prevInput, input) => {
         if(prevState.velY > 0 || isInCooldownFall(state)) {
             state.dash = false;
             state.cooldown = false;
-            const landEffect = new LandEffectState(state.x, state.y + playerHeight, state.velX / 4)
-            spawnedEffects.push(landEffect)
+            const landEffect = new LandEffectState(state.x, state.y + playerHeight, state.velX / 4);
+            spawnedEffects.push(landEffect);
+            heavySound.play(tickTime);
         }
 
         state.airJumpsUsed = 0; // Reset air jumps
@@ -109,8 +112,9 @@ const tickPlayerState = (prevState, state, prevInput, input) => {
             state.right = false;
 
             if (onGround && (!prevInput.left || prevInput.right)) {
-                const dashEffect = new DashEffectState(state.x, state.y + playerHeight, 1)
-                spawnedEffects.push(dashEffect)
+                const dashEffect = new DashEffectState(state.x, state.y + playerHeight, 1);
+                spawnedEffects.push(dashEffect);
+                runSound.play(tickTime);
             }
         }
         else if(input.right && !input.left) {
@@ -119,8 +123,9 @@ const tickPlayerState = (prevState, state, prevInput, input) => {
             state.right = true;
 
             if (onGround && (!prevInput.right || prevInput.left)) {
-                const dashEffect = new DashEffectState(state.x, state.y + playerHeight, -1)
-                spawnedEffects.push(dashEffect)
+                const dashEffect = new DashEffectState(state.x, state.y + playerHeight, -1);
+                spawnedEffects.push(dashEffect);
+                runSound.play(tickTime);
             }
         }
         state.velX -= state.velX * friction;
@@ -159,6 +164,7 @@ const tickPlayerState = (prevState, state, prevInput, input) => {
 
     // Dashing
     if(input.dash && !prevInput.dash && !isInDashOrCooldown(state)) {
+        dashSound.play(tickTime);
         state.dash = onGround ? groundDashLength : airDashLength;
         state.velX = state.right ? dashSpeed : -dashSpeed;
         state.velY = state.velY * dashYTransfer;

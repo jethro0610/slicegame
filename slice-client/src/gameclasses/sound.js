@@ -1,0 +1,30 @@
+import dashAudio from '../sounds/dash.wav'
+import runAudio from '../sounds/run.wav'
+import heavyAudio from '../sounds/heavy.wav'
+
+function sound(src) {
+    this.ticksPlayed = new Set();
+    this.sound = document.createElement('audio');
+    this.sound.src = src;
+    this.sound.setAttribute('preload', 'auto');
+    this.sound.setAttribute('controls', 'none');
+    this.sound.style.display = 'none';
+    document.body.appendChild(this.sound);
+    this.play = function(tickTime) {
+        if (!this.ticksPlayed.has(tickTime)) {
+            this.sound.currentTime = 0;
+            this.sound.play();
+            this.ticksPlayed.add(tickTime);
+        }
+    }
+
+    this.stop = function() {
+        this.sound.pause();
+    }
+}
+
+const dashSound = new sound(dashAudio);
+const runSound = new sound(runAudio);
+const heavySound = new sound(heavyAudio);
+
+export { dashSound, runSound, heavySound }
