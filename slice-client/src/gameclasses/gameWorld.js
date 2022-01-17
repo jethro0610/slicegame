@@ -5,6 +5,7 @@ import { setStarted } from '../redux/reducers/gameStarted';
 import { createGameState, drawGameState, tickGameState } from './game';
 import { levelWidth, levelHeight } from './level';
 import { playRandomSong, stopSong } from "../music/music";
+import { resetSounds } from "./sound";
 const lodash = require('lodash');
 
 let gameWorld = null;
@@ -23,6 +24,7 @@ const stopGame = () => {
     store.dispatch(setStarted(false));
     destroyOnNextDraw = true;
     stopSong();
+    resetSounds();
 }
 
 const mapSetCapped = (map, key, value, cap) => {

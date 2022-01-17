@@ -6,6 +6,13 @@ import doubleJumpAudio from '../sounds/doublejump.wav'
 import pointAudio from '../sounds/point.wav'
 import hitAudio from '../sounds/hit.wav'
 
+const sounds = []
+
+const resetSounds = () => {
+    for (let i = 0; i < sounds.length; i++)
+        sounds[i].ticksPlayed.clear()
+}
+
 function sound(src) {
     this.ticksPlayed = new Set();
     this.sound = document.createElement('audio');
@@ -14,6 +21,7 @@ function sound(src) {
     this.sound.setAttribute('controls', 'none');
     this.sound.style.display = 'none';
     document.body.appendChild(this.sound);
+    sounds.push(this);
     this.play = function(tickTime) {
         if (!this.ticksPlayed.has(tickTime)) {
             this.sound.currentTime = 0;
@@ -35,4 +43,4 @@ const doubleJumpSound = new sound(doubleJumpAudio);
 const pointSound = new sound(pointAudio);
 const hitSound = new sound(hitAudio);
 
-export { dashSound, runSound, heavySound, jumpSound, doubleJumpSound, pointSound, hitSound }
+export { dashSound, runSound, heavySound, jumpSound, doubleJumpSound, pointSound, hitSound, resetSounds }
