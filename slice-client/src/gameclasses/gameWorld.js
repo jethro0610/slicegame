@@ -4,6 +4,7 @@ import store from '../redux/store/store';
 import { setStarted } from '../redux/reducers/gameStarted';
 import { createGameState, drawGameState, tickGameState } from './game';
 import { levelWidth, levelHeight } from './level';
+import { playRandomSong, stopSong } from "../music/music";
 const lodash = require('lodash');
 
 let gameWorld = null;
@@ -15,11 +16,13 @@ const delay = 2
 const startGame = (remote, isHost) => {
     gameWorld = new GameWorld(levelWidth, levelHeight, remote, isHost);
     store.dispatch(setStarted(true));
+    playRandomSong();
 }
 
 const stopGame = () => {
     store.dispatch(setStarted(false));
     destroyOnNextDraw = true;
+    stopSong();
 }
 
 const mapSetCapped = (map, key, value, cap) => {
