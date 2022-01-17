@@ -1,8 +1,8 @@
 import Collider from "./collider";
 import { platforms, levelWidth, levelHeight } from "./level";
-import { DashEffectState, LandEffectState } from './effect'
+import { AttackEffectState, DashEffectState, LandEffectState, PointEffectState } from './effect'
 import VSprite from './vsprite'
-import { dashSound, heavySound, runSound } from "./sound";
+import { dashSound, heavySound, jumpSound, runSound, doubleJumpSound } from "./sound";
 // Create the player VSprite and add animations
 const playerVSpriteJson = require('../vsprites/char.json')
 const playerVSprite = new VSprite(playerVSpriteJson)
@@ -153,12 +153,17 @@ const tickPlayerState = (prevState, state, prevInput, input, tickTime) => {
 
     // Jumping
     if (input.up && !prevInput.up && !isInDashOrCooldown(state)) {
-        if(onGround)
+        if(onGround) {
             state.velY = -jumpStrength;
+            jumpSound.play(tickTime);
+            const jumpEffect = new LandEffectState(state.x, state.y + playerHeight, 0);
+            spawnedEffects.push(jumpEffect);
+        }
         else if(state.airJumpsUsed < maxAirJumps) {
             state.airJumpsUsed += 1;
             state.velY = -jumpStrength;
             calculateReversal(state, input, jumpReversalSpeed);
+            doubleJumpSound.play(tickTime);
         }
     }
 

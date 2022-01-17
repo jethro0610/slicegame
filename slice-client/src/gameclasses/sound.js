@@ -1,6 +1,8 @@
 import dashAudio from '../sounds/dash.wav'
 import runAudio from '../sounds/run.wav'
 import heavyAudio from '../sounds/heavy.wav'
+import jumpAudio from '../sounds/jump.wav'
+import doubleJumpAudio from '../sounds/doublejump.wav'
 
 function sound(src) {
     this.ticksPlayed = new Set();
@@ -26,5 +28,7 @@ function sound(src) {
 const dashSound = new sound(dashAudio);
 const runSound = new sound(runAudio);
 const heavySound = new sound(heavyAudio);
+const jumpSound = new sound(jumpAudio);
+const doubleJumpSound = new sound(doubleJumpAudio);
 
-export { dashSound, runSound, heavySound }
+export { dashSound, runSound, heavySound, jumpSound, doubleJumpSound }
