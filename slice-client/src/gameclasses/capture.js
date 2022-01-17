@@ -30,7 +30,7 @@ const getPlayersOnCapturePoint = (captureState, player1State, player2State) => {
         return 0;
 }
 
-const tickCaptureState = (captureState, player1State, player2State, onScore, ...args) => {
+const tickCaptureState = (captureState, player1State, player2State, tickTime, onScore, ...args) => {
     // Add any capture points
     const capturePlayer = getPlayersOnCapturePoint(captureState, player1State, player2State);
 
@@ -65,12 +65,12 @@ const tickCaptureState = (captureState, player1State, player2State, onScore, ...
 
         if (player1Touching && ! player2Touching) {
             captureState.ballTime = -1;
-            onScore(1, captureState.x, captureState.y - 75, args);
+            onScore(1, captureState.x, captureState.y - 75, tickTime, args);
         }
 
         if (player2Touching && !player1Touching) {
             captureState.ballTime = -1;
-            onScore(2, captureState.x, captureState.y - 75, args);
+            onScore(2, captureState.x, captureState.y - 75, tickTime, args);
         }
     }
 }

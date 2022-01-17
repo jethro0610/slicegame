@@ -3,6 +3,8 @@ import runAudio from '../sounds/run.wav'
 import heavyAudio from '../sounds/heavy.wav'
 import jumpAudio from '../sounds/jump.wav'
 import doubleJumpAudio from '../sounds/doublejump.wav'
+import pointAudio from '../sounds/point.wav'
+import hitAudio from '../sounds/hit.wav'
 
 function sound(src) {
     this.ticksPlayed = new Set();
@@ -30,5 +32,7 @@ const runSound = new sound(runAudio);
 const heavySound = new sound(heavyAudio);
 const jumpSound = new sound(jumpAudio);
 const doubleJumpSound = new sound(doubleJumpAudio);
+const pointSound = new sound(pointAudio);
+const hitSound = new sound(hitAudio);
 
-export { dashSound, runSound, heavySound, jumpSound, doubleJumpSound }
+export { dashSound, runSound, heavySound, jumpSound, doubleJumpSound, pointSound, hitSound }

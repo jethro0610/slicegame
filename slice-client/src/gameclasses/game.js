@@ -4,6 +4,7 @@ import { drawPlatform } from "./platform";
 import { levelHeight, levelWidth, platforms } from "./level";
 import { AttackEffectState, PointEffectState } from "./effect";
 import { disconnect } from './networking';
+import { hitSound, pointSound } from "./sound";
 const lodash = require('lodash');
 
 const startGameLength = 180;
@@ -95,7 +96,7 @@ const tickGameState = (state, player1Input, prevPlayer1Input, player2Input, prev
             tickMidroundGameState(state, playerStateInfo, tickTime);
             break;
         case roundTypes.ENDROUND:
-            tickEndRoundGameState(state, playerStateInfo);
+            tickEndRoundGameState(state, playerStateInfo, tickTime);
             break;
         case roundTypes.ENDGAME:
             tickEndGameState(state);
@@ -173,11 +174,12 @@ const tickMidroundGameState = (state, playerStateInfo, tickTime) => {
             state.effectStates.push(new AttackEffectState(playerStateInfo.player1State.x, playerStateInfo.player1State.y + playerHeight / 2));
         else if (dashCollisionResult === 2)
             state.effectStates.push(new AttackEffectState(playerStateInfo.player2State.x, playerStateInfo.player2State.y + playerHeight / 2));
+        hitSound.play(tickTime);
     }
 
     // Add any capture points
-    tickCaptureState(state.topCaptureState, playerStateInfo.player1State, playerStateInfo.player2State, onScore, state);
-    tickCaptureState(state.bottomCaptureState, playerStateInfo.player1State, playerStateInfo.player2State, onScore, state);
+    tickCaptureState(state.topCaptureState, playerStateInfo.player1State, playerStateInfo.player2State, tickTime, onScore, state);
+    tickCaptureState(state.bottomCaptureState, playerStateInfo.player1State, playerStateInfo.player2State, tickTime, onScore, state);
 
     if (state.player1Score >= maxPoints || state.player2Score >= maxPoints) {
         playerStateInfo.player1State = createPlayerState(player1SpawnX, -100, true);
@@ -188,7 +190,7 @@ const tickMidroundGameState = (state, playerStateInfo, tickTime) => {
     }
 }
 
-const onScore = (scoringPlayer, x, y, args) => {
+const onScore = (scoringPlayer, x, y, tickTime, args) => {
     const state = args[0];
     if (scoringPlayer === 1)
         state.player1Score += 1;
@@ -198,25 +200,27 @@ const onScore = (scoringPlayer, x, y, args) => {
     state.effectStates.push(new PointEffectState(x, y, 30, 60));
     state.textAnimTime = 0.0;
     state.roundWinner = scoringPlayer;
+    pointSound.play(tickTime);
 }
 
-const tickEndRoundGameState = (state, playerStateInfo) => {
+const tickEndRoundGameState = (state, playerStateInfo, tickTime) => {
     // Tick the end round player states
     tickEndRoundPlayerState(playerStateInfo.prevPlayer1State, playerStateInfo.player1State, state.roundWinner === 2);
     tickEndRoundPlayerState(playerStateInfo.prevPlayer2State, playerStateInfo.player2State, state.roundWinner === 1);
 
     state.roundTimer += 1;
 
-    if(state.roundTimer === 60) {
+    if(state.roundTimer === 80) {
         if (state.roundWinner === 1)
             state.player1Score += 5;
         else if (state.roundWinner === 2)
             state.player2Score += 5;
+        pointSound.play(tickTime);
 
         state.textAnimTime = 0.0;
         state.effectStates.push(new PointEffectState(levelWidth / 2, levelHeight / 2, 30, 60));
     }
-    if (state.roundTimer === 150) {
+    if (state.roundTimer === 140) {
         state.roundState = roundTypes.STARTROUND;
         playerStateInfo.player1State = createPlayerState(player1SpawnX, -100, true);
         playerStateInfo.player2State = createPlayerState(player2SpawnX, -100, false);
