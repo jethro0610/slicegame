@@ -1,0 +1,27 @@
+#muteButton {
+    opacity: 0.25;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    right: 0px;
+    bottom: 0px;
+    margin: 25px;
+    width: 40px;
+    height: 40px;
+    background-color: #5B8EAB;
+    transform: rotateY(0deg) rotate(45deg);
+    padding: 0;
+    border: none;
+}
+
+#muteButtonImg {
+    margin: 0;
+    width: 80%;
+    height: 80%;
+    transform: rotateY(0deg) rotate(-45deg);
+}
+
+#muteButton:hover {
+    opacity: 1.0;
+}

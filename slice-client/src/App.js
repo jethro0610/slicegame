@@ -4,6 +4,7 @@ import StartScreen from './components/startScreen';
 import SearchScreen from './components/searchScreen';
 import { connect } from 'react-redux';
 import './gameclasses/networking';
+import MuteButton from './components/muteButton';
 
 const mapStateToProps =  state => {
   return {
@@ -21,6 +22,7 @@ const ConnectApp = ({gameStarted, searching}) => {
   
   return (
     <div>
+      <MuteButton/>
       { startScreen }
       { searchScreen }
       { gameCanvas }

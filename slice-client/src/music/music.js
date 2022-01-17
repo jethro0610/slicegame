@@ -1,5 +1,9 @@
 import bluebird from './Bluebird.mp3'
 import presentday from './Present Day.mp3'
+import store from '../redux/store/store'
+import { setMuted } from '../redux/reducers/muted'
+
+let muted = false;
 const songs = [];
 let currentSong = -1;
 
@@ -30,6 +34,15 @@ const stopSong = () => {
     currentSong = -1;
 }
 
+const toggleMute = () => {
+    muted = !muted;
+    const volume = muted ? 0.0 : 0.25;
+    for (let i = 0; i < songs.length; i++)
+        songs[i].sound.volume = volume;
+
+    store.dispatch(setMuted(muted));
+}
+
 function song(src) {
     this.sound = document.createElement('audio');
     this.sound.src = src;
@@ -55,4 +68,4 @@ function song(src) {
 songs.push(new song(bluebird));
 songs.push(new song(presentday));
 
-export { playNextSong, playRandomSong, stopSong}
+export { playNextSong, playRandomSong, stopSong, toggleMute }
