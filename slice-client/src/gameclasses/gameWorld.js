@@ -50,7 +50,7 @@ class GameWorld {
         this.tickWaitTime = 0;
 
         this.rollbackTick = Infinity;
-        this.lastRemoteInputTick = 0;
+        this.lastRemoteInputTick = Infinity;
 
         this.localInputs = new Map();
         this.localInputs.set(0, getDefaultInput());
@@ -181,14 +181,14 @@ class GameWorld {
 
         // Either rollback to the earliest recieved input, or the last tick where the remote
         // sent a valid input. This ensures that missed inputs are corrected
-        const rollbackPoint = Math.min(this.rollbackTick, this.lastRemoteInputTick + 1);
+        const rollbackPoint = Math.min(this.rollbackTick, this.lastRemoteInputTick);
         let lastValidInput = undefined;
         let missingInput = false;
         for(let i = rollbackPoint; i <= this.tickCount; i++) {
             // Determine if an input is missing and record the last valid input
             // if there is a missing input, the loop executes the rest of the
             // ticks using the last valid one
-            if(this.remoteInputs.get(i) && !missingInput) {
+            if(this.remoteInputs.has(i) && !missingInput) {
                 lastValidInput = i;
                 this.lastRemoteInputTick = i;
             }
@@ -205,14 +205,14 @@ class GameWorld {
                 prevPlayer1Input = this.localInputs.get(i - 1);
 
                 player2Input = this.remoteInputs.get(lastValidInput);
-                prevPlayer2Input = this.remoteInputs.get(missingInput ? lastValidInput : lastValidInput - 1);
+                prevPlayer2Input = this.remoteInputs.get(lastValidInput - 1);
             }
             else {
                 player2Input = this.localInputs.get(i);
                 prevPlayer2Input = this.localInputs.get(i - 1);
 
                 player1Input = this.remoteInputs.get(lastValidInput);
-                prevPlayer1Input = this.remoteInputs.get(missingInput ? lastValidInput : lastValidInput - 1);
+                prevPlayer1Input = this.remoteInputs.get(lastValidInput - 1);
             }
             if (!this.remoteInputs.get(lastValidInput))
                 console.log('empty');
