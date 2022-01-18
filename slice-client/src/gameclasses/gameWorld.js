@@ -212,6 +212,8 @@ class GameWorld {
                 player1Input = this.remoteInputs.get(lastValidInput);
                 prevPlayer1Input = this.remoteInputs.get(missingInput ? lastValidInput : lastValidInput - 1);
             }
+            if (!this.remoteInputs.get(lastValidInput))
+                console.log('empty');
             this.tickGameStateAtTick(i, player1Input, prevPlayer1Input, player2Input, prevPlayer2Input)
         }
 
