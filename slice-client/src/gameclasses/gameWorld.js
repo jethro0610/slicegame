@@ -188,12 +188,14 @@ class GameWorld {
             // Determine if an input is missing and record the last valid input
             // if there is a missing input, the loop executes the rest of the
             // ticks using the last valid one
-            if(this.remoteInputs.has(i) && !missingInput) {
+            if(this.remoteInputs.get(i) && !missingInput) {
                 lastValidInput = i;
                 this.lastRemoteInputTick = i;
             }
-            else
+            else {
+                console.log('missing input');
                 missingInput = true;
+            }
 
             // Assign the inputs of the rollback ticks and
             // tick the game
